@@ -85,8 +85,8 @@ def test_code(test_case):
         if angles[i-1] > jointLimits[i][0] and angles[i-1] < jointLimits[i][1]:
             pass
         else:
-            print "Angle theta"+str(i)+" outside joint range!"
-            print "Range:", jointLimits[i], "Theta:", angles[i-1]
+            print "\n*** Angle theta"+str(i)+" outside joint range! ***"
+            print "Range:", jointLimits[i], "Theta:", angles[i-1], "\n"
 
     ########################################################################################
     ## For additional debugging add your forward kinematics here. Use your previously calculated thetas
