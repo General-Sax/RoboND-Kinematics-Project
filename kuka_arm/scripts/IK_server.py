@@ -22,6 +22,8 @@ from sympy.matrices import Matrix, eye
 import numpy as np
 
 
+
+
 def handle_calculate_IK(req, debug_return=False):
     rospy.loginfo("Received %s eef-poses from the plan" % len(req.poses))
     if len(req.poses) < 1:
@@ -51,13 +53,17 @@ def handle_calculate_IK(req, debug_return=False):
         j4_correction = 0.036 # = N(atan2(0.054, 1.50)), (rounded)
 
         ### Your FK code here
+
         ## Create symbols
         q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')  # theta angles
         # d1, d2, d3, d4, d5, d6, d7 = symbols('d1:8')
         # a0, a1, a2, a3, a4, a5, a6 = symbols('a0:7')
         # alpha0, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6 = symbols('alpha0:7')
         #
-        # Enter table of values:
+        # ee_position = ([
+        #     [-0.303*(sin(q1)*sin(q4) + sin(q2 + q3)*cos(q1)*cos(q4))*sin(q5) + (1.25*sin(q2) - 0.054*sin(q2 + q3) + 1.5*cos(q2 + q3) + 0.35)*cos(q1) + 0.303*cos(q1)*cos(q5)*cos(q2 + q3)],
+        #     [-0.303*(sin(q1)*sin(q2 + q3)*cos(q4) - sin(q4)*cos(q1))*sin(q5) + (1.25*sin(q2) - 0.054*sin(q2 + q3) + 1.5*cos(q2 + q3) + 0.35)*sin(q1) + 0.303*sin(q1)*cos(q5)*cos(q2 + q3)],
+        #     [-0.303*sin(q5)*cos(q4)*cos(q2 + q3) - 0.303*sin(q2 + q3)*cos(q5) - 1.5*sin(q2 + q3) + 1.25*cos(q2) - 0.054*cos(q2 + q3) + 0.75]])
     	#
     	## Create Modified DH parameter table:
         # dh = {alpha0: 0,        a0: 0,      d1: 0.75,   q1: q1,
@@ -72,7 +78,24 @@ def handle_calculate_IK(req, debug_return=False):
     	#
     	#
     	## Create individual transformation matrices
-    	#
+    	def checkError_EE(theta_list, pose):
+            sin = np.math.sin
+            cos = np.math.sin
+
+            q1n, q2n, q3n, q4n, q5n, q6n = theta_list
+
+            # fk_position is the translation vector from the total homogeneous transform
+            # between the base and the end effector; this representation has frame error
+            # correction baked in!
+            fk_position = np.array([
+                [-0.303*(sin(q1n)*sin(q4n) + sin(q2n + q3n)*cos(q1n)*cos(q4n))*sin(q5n) + (1.25*sin(q2n) - 0.054*sin(q2n + q3n) + 1.5*cos(q2n + q3n) + 0.35)*cos(q1n) + 0.303*cos(q1n)*cos(q5n)*cos(q2n + q3n)],
+                [-0.303*(sin(q1n)*sin(q2n + q3n)*cos(q4n) - sin(q4n)*cos(q1n))*sin(q5n) + (1.25*sin(q2n) - 0.054*sin(q2n + q3n) + 1.5*cos(q2n + q3n) + 0.35)*sin(q1n) + 0.303*sin(q1n)*cos(q5n)*cos(q2n + q3n)],
+                [-0.303*sin(q5n)*cos(q4n)*cos(q2n + q3n) - 0.303*sin(q2n + q3n)*cos(q5n) - 1.5*sin(q2n + q3n) + 1.25*cos(q2n) - 0.054*cos(q2n + q3n) + 0.75]])
+
+            pose_target = np.array([[pose.position.x], [pose.position.y], [pose.position.z]])
+            error_vect = pose_target - fk_position
+            abs_error = np.linalg.norm(error_vect)
+            return abs_error
     	#
     	## Extract rotation matrices from the transformation matrices
     	#
