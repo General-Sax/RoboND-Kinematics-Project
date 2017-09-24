@@ -86,6 +86,9 @@ def test_code(test_case):
         [         -1.5*sin(q2 + q3) + 1.25*cos(q2) - 0.054*cos(q2 + q3) + 0.75]])
     fk_wrist = fk_wrist.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
 
+    # fk_EE is the translation vector from the total homogeneous transform
+    # between the base and the end effector; this representation has frame error
+    # correction baked in!
     fk_EE = Matrix([
         [-0.303*(sin(q1)*sin(q4) + sin(q2 + q3)*cos(q1)*cos(q4))*sin(q5) + (1.25*sin(q2) - 0.054*sin(q2 + q3) + 1.5*cos(q2 + q3) + 0.35)*cos(q1) + 0.303*cos(q1)*cos(q5)*cos(q2 + q3)],
         [-0.303*(sin(q1)*sin(q2 + q3)*cos(q4) - sin(q4)*cos(q1))*sin(q5) + (1.25*sin(q2) - 0.054*sin(q2 + q3) + 1.5*cos(q2 + q3) + 0.35)*sin(q1) + 0.303*sin(q1)*cos(q5)*cos(q2 + q3)],
@@ -93,21 +96,13 @@ def test_code(test_case):
 
     end_effector = fk_EE.evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4: theta4, q5: theta5, q6: theta6})
 
-    # R_corr = Matrix([
-    #     [ 0,  0,  1],
-    #     [ 0, -1,  0],
-    #     [ 1,  0,  0]])
-
-    # end_effector = list(R_corr * end_effector)
-
-
     ## End your code input for forward kinematics here!
     ########################################################################################
 
     ## For error analysis please set the following variables of your WC location and EE location in the format of [x,y,z]
     your_wc = list(fk_wrist) # <--- Load your calculated WC values in this array
     # your_ee = [fk_EE[0], fk_EE[1], fk_EE[2]] # <--- Load your calculated end effector value from your forward kinematics
-    your_ee = list(R_corr * end_effector)
+    your_ee = list(end_effector)
     ########################################################################################
 
     ## Error analysis
