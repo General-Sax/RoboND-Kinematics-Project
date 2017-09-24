@@ -15,7 +15,11 @@ import tf
 from kuka_arm.srv import *
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from geometry_msgs.msg import Pose
-from sympy import *
+
+from sympy import symbols, sin, cos, sqrt, simplify, atan2
+from sympy.matrices import Matrix, eye
+
+import numpy as np
 
 
 def handle_calculate_IK(req, debug_return=False):
@@ -31,6 +35,7 @@ def handle_calculate_IK(req, debug_return=False):
         # bake it into the total end effector transform matrix.
 
         r, p, y = symbols('r p y') # r, p, y later substituted for EE roll, pitch, and yaw respectively
+
         # R_EE is a 'prefabricated' end effector orientation matrix w/correction for coordinate system mismatch/
         # Corrected using precisely-derived matrix R_corr, below:
         R_EE = Matrix([
@@ -172,20 +177,20 @@ def handle_calculate_IK(req, debug_return=False):
 
 
 
-            if x != 0 and x != len(req.poses)-1:
-                while abs(theta4 - joint_trajectory_list[x-1].positions[3]) > N(pi):
-                    if joint_trajectory_list[x-1].positions[3] > theta4:
-                        theta4 += N(pi)
-                        theta5 *= -1.0
-                    elif joint_trajectory_list[x-1].positions[3] < theta4:
-                        theta4 -= N(pi)
-                        theta5 *= -1.0
-
-                while abs(theta6 - joint_trajectory_list[x-1].positions[5]) > N(pi):
-                    if joint_trajectory_list[x-1].positions[5] > theta6:
-                        theta6 += N(pi)
-                    elif joint_trajectory_list[x-1].positions[5] < theta6:
-                        theta6 -= N(pi)
+            # if x != 0 and x != len(req.poses)-1:
+            #     while abs(theta4 - joint_trajectory_list[x-1].positions[3]) > N(pi):
+            #         if joint_trajectory_list[x-1].positions[3] > theta4:
+            #             theta4 += N(pi)
+            #             theta5 *= -1.0
+            #         elif joint_trajectory_list[x-1].positions[3] < theta4:
+            #             theta4 -= N(pi)
+            #             theta5 *= -1.0
+            #
+            #     while abs(theta6 - joint_trajectory_list[x-1].positions[5]) > N(pi):
+            #         if joint_trajectory_list[x-1].positions[5] > theta6:
+            #             theta6 += N(pi)
+            #         elif joint_trajectory_list[x-1].positions[5] < theta6:
+            #             theta6 -= N(pi)
 
 
             ###########
