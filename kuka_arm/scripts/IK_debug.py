@@ -71,8 +71,22 @@ def test_code(test_case):
     ############################################################################
     # IK function 'handle_calculate_IK' imported from
 
-    test_point = handle_calculate_IK(req, debug_return=True)[0].positions
-    theta1, theta2, theta3, theta4, theta5, theta6 = test_point
+    angles = tuple(handle_calculate_IK(req, debug_return=True)[0].positions)
+    theta1, theta2, theta3, theta4, theta5, theta6 = angles
+
+    jointLimits = {1: (-3.2288591161895095, 3.2288591161895095),
+                   2: (0.7853981633974483, 1.4835298641951802),
+                   3: (-3.6651914291880923, 1.1344640137963142),
+                   3: (-6.1086523819801535, 6.1086523819801535),
+                   5: (-2.181661564992912, 2.181661564992912),
+                   6: (-6.1086523819801535, 6.1086523819801535)}
+
+    for i in range(1, 7):
+        if angles[i-1] > jointLimits[i][0] and angles[i-1] < jointLimits[i][1]:
+            pass
+        else:
+            print "Angle theta"+str(i)+" outside joint range!"
+            print "Range:", jointLimits[i], "Theta:", angles[i-1]
 
     ########################################################################################
     ## For additional debugging add your forward kinematics here. Use your previously calculated thetas
