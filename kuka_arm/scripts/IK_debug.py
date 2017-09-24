@@ -4,6 +4,9 @@ from mpmath import radians
 import tf
 import numpy as np
 
+from IK_server import handle_calculate_IK
+
+
 '''
 Format of test case is [ [[EE position],[EE orientation as quaternions]],[WC location],[joint angles]]
 You can generate additional test cases by setting up your kuka project and running `$ roslaunch kuka_arm forward_kinematics.launch`
@@ -68,8 +71,6 @@ def test_code(test_case):
     ############################################################################
     # IK function 'handle_calculate_IK' imported from
 
-    from IK_server import handle_calculate_IK
-
     test_point = handle_calculate_IK(req, debug_return=True)[0].positions
     theta1, theta2, theta3, theta4, theta5, theta6 = test_point
 
@@ -84,26 +85,29 @@ def test_code(test_case):
         [(1.25*sin(q2) - 0.054*sin(q2 + q3) + 1.5*cos(q2 + q3) + 0.35)*sin(q1)],
         [         -1.5*sin(q2 + q3) + 1.25*cos(q2) - 0.054*cos(q2 + q3) + 0.75]])
     fk_wrist = fk_wrist.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-    
+
     fk_EE = Matrix([
         [-0.303*(sin(q1)*sin(q4) + sin(q2 + q3)*cos(q1)*cos(q4))*sin(q5) + (1.25*sin(q2) - 0.054*sin(q2 + q3) + 1.5*cos(q2 + q3) + 0.35)*cos(q1) + 0.303*cos(q1)*cos(q5)*cos(q2 + q3)],
         [-0.303*(sin(q1)*sin(q2 + q3)*cos(q4) - sin(q4)*cos(q1))*sin(q5) + (1.25*sin(q2) - 0.054*sin(q2 + q3) + 1.5*cos(q2 + q3) + 0.35)*sin(q1) + 0.303*sin(q1)*cos(q5)*cos(q2 + q3)],
         [-0.303*sin(q5)*cos(q4)*cos(q2 + q3) - 0.303*sin(q2 + q3)*cos(q5) - 1.5*sin(q2 + q3) + 1.25*cos(q2) - 0.054*cos(q2 + q3) + 0.75]])
-    fk_EE = fk_EE.evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4: theta4, q5: theta5, q6: theta6})
 
-    R_corr = Matrix([
-        [ 0,  0,  1],
-        [ 0, -1,  0],
-        [ 1,  0,  0]])
+    end_effector = fk_EE.evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4: theta4, q5: theta5, q6: theta6})
 
-    fk_EE = R_corr * fk_EE
-    
+    # R_corr = Matrix([
+    #     [ 0,  0,  1],
+    #     [ 0, -1,  0],
+    #     [ 1,  0,  0]])
+
+    # end_effector = list(R_corr * end_effector)
+
+
     ## End your code input for forward kinematics here!
     ########################################################################################
 
     ## For error analysis please set the following variables of your WC location and EE location in the format of [x,y,z]
-    your_wc = [fk_wrist[0], fk_wrist[1], fk_wrist[2]] # <--- Load your calculated WC values in this array
-    your_ee = [fk_EE[0], fk_EE[1], fk_EE[2]] # <--- Load your calculated end effector value from your forward kinematics
+    your_wc = list(fk_wrist) # <--- Load your calculated WC values in this array
+    # your_ee = [fk_EE[0], fk_EE[1], fk_EE[2]] # <--- Load your calculated end effector value from your forward kinematics
+    your_ee = list(R_corr * end_effector)
     ########################################################################################
 
     ## Error analysis
