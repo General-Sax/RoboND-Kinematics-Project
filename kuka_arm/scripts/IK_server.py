@@ -15,8 +15,8 @@ import tf
 from kuka_arm.srv import *
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from geometry_msgs.msg import Pose
-from mpmath import *
 from sympy import *
+
 
 def handle_calculate_IK(req, debug_return=False):
     rospy.loginfo("Received %s eef-poses from the plan" % len(req.poses))
@@ -24,7 +24,7 @@ def handle_calculate_IK(req, debug_return=False):
         print "No valid poses received"
         return -1
     else:
-        
+
         # Rather than construct an error correction transform for the coordinate
         # system mismatch by evaluating substitutions numerically, which leads
         # to small but avoidable error, I opted to solve it symbolically and
@@ -170,6 +170,8 @@ def handle_calculate_IK(req, debug_return=False):
             #         theta4 -= N(pi)
             #         theta5 *= -1.0
 
+
+
             if x != 0 and x != len(req.poses)-1:
                 while abs(theta4 - joint_trajectory_list[x-1].positions[3]) > N(pi):
                     if joint_trajectory_list[x-1].positions[3] > theta4:
@@ -195,8 +197,8 @@ def handle_calculate_IK(req, debug_return=False):
         rospy.loginfo("length of Joint Trajectory List: %s" % len(joint_trajectory_list))
 
         if debug_return:
-            return joint_trajectory_list     
-        
+            return joint_trajectory_list
+
         return CalculateIKResponse(joint_trajectory_list)
 
 
