@@ -21,8 +21,12 @@ from sympy.matrices import Matrix, eye
 
 import numpy as np
 
+# import os
+# import pickle
+import csv
 
-
+record_error_log=True
+request_num = 0
 
 def handle_calculate_IK(req, debug_return=False):
     rospy.loginfo("Received %s eef-poses from the plan" % len(req.poses))
@@ -93,10 +97,15 @@ def handle_calculate_IK(req, debug_return=False):
                 [-0.303*sin(q5n)*cos(q4n)*cos(q2n + q3n) - 0.303*sin(q2n + q3n)*cos(q5n) - 1.5*sin(q2n + q3n) + 1.25*cos(q2n) - 0.054*cos(q2n + q3n) + 0.75]])
 
             pose_target = np.array([[pose.position.x], [pose.position.y], [pose.position.z]])
+
             error_vect = pose_target - fk_position
-            abs_error = np.linalg.norm(error_vect)
-            return abs_error
-    	#
+
+            xErr, yErr, zErr = error_vect[0], error_vect[1], error_vect[2]
+
+            absError = np.linalg.norm(error_vect)
+            return xErr, yErr, zErr, absError
+
+
     	## Extract rotation matrices from the transformation matrices
     	#
     	#
@@ -106,6 +115,7 @@ def handle_calculate_IK(req, debug_return=False):
             [sin(q2 + q3)*cos(q1), sin(q1)*sin(q2 + q3),  cos(q2 + q3)],
             [cos(q1)*cos(q2 + q3), sin(q1)*cos(q2 + q3), -sin(q2 + q3)],
             [            -sin(q1),              cos(q1),             0]])
+
 
         # Initialize service response
         joint_trajectory_list = []
@@ -218,9 +228,20 @@ def handle_calculate_IK(req, debug_return=False):
 
             ###########
 
+            if record_error_log:
+                request_num += 1
+                xErr, yErr, zErr, absErr = checkError_EE([theta1, theta2, theta3, theta4, theta5, theta6], req.poses[x])
+
+                with open('position_error_log.csv', 'a') as err_log:
+                    writer = csv.writer(err_log)
+                    writer.writerow([request_num, x+1, xErr, yErr, zErr, absErr])
+
             # Populate response for the IK request
             joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
             joint_trajectory_list.append(joint_trajectory_point)
+
+
+
 
         rospy.loginfo("length of Joint Trajectory List: %s" % len(joint_trajectory_list))
 
@@ -231,6 +252,11 @@ def handle_calculate_IK(req, debug_return=False):
 
 
 def IK_server():
+    if record_error_log:
+        with open('position_error_log.csv', 'w') as err_log:
+            writer = csv.writer(err_log)
+            writer.writerow(["Request Number", "Pose Number", "EEx err", "EEy err", "EEz err", "Abs err"])
+
     # initialize node and declare calculate_ik service
     rospy.init_node('IK_server')
     s = rospy.Service('calculate_ik', CalculateIK, handle_calculate_IK)
