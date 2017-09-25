@@ -26,7 +26,6 @@ import numpy as np
 import csv
 
 record_error_log=True
-request_num = 0
 
 def handle_calculate_IK(req, debug_return=False):
     rospy.loginfo("Received %s eef-poses from the plan" % len(req.poses))
@@ -229,12 +228,11 @@ def handle_calculate_IK(req, debug_return=False):
             ###########
 
             if record_error_log:
-                request_num += 1
                 xErr, yErr, zErr, absErr = checkError_EE([theta1, theta2, theta3, theta4, theta5, theta6], req.poses[x])
 
                 with open('position_error_log.csv', 'a') as err_log:
                     writer = csv.writer(err_log)
-                    writer.writerow([request_num, x+1, xErr, yErr, zErr, absErr])
+                    writer.writerow([x+1, xErr, yErr, zErr, absErr])
 
             # Populate response for the IK request
             joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
@@ -255,7 +253,7 @@ def IK_server():
     if record_error_log:
         with open('position_error_log.csv', 'w') as err_log:
             writer = csv.writer(err_log)
-            writer.writerow(["Request Number", "Pose Number", "EEx err", "EEy err", "EEz err", "Abs err"])
+            writer.writerow(["Pose Number", "EEx err", "EEy err", "EEz err", "Abs err"])
 
     # initialize node and declare calculate_ik service
     rospy.init_node('IK_server')
