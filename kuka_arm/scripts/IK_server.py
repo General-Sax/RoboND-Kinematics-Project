@@ -16,7 +16,7 @@ from kuka_arm.srv import *
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from geometry_msgs.msg import Pose
 
-from sympy import symbols, sin, cos, sqrt, simplify, atan2
+from sympy import symbols, sin, cos, sqrt, simplify, atan2, N, acos, pi
 from sympy.matrices import Matrix, eye
 
 import numpy as np
