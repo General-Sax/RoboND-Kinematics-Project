@@ -95,7 +95,7 @@ def handle_calculate_IK(req, debug_return=False):
                 [-0.303*(sin(q1n)*sin(q2n + q3n)*cos(q4n) - sin(q4n)*cos(q1n))*sin(q5n) + (1.25*sin(q2n) - 0.054*sin(q2n + q3n) + 1.5*cos(q2n + q3n) + 0.35)*sin(q1n) + 0.303*sin(q1n)*cos(q5n)*cos(q2n + q3n)],
                 [-0.303*sin(q5n)*cos(q4n)*cos(q2n + q3n) - 0.303*sin(q2n + q3n)*cos(q5n) - 1.5*sin(q2n + q3n) + 1.25*cos(q2n) - 0.054*cos(q2n + q3n) + 0.75]])
 
-            pose_target = np.array([[pose.position.x], [pose.position.y], [pose.position.z]])
+            pose_target = np.array([[pose.position.z], [-pose.position.y], [pose.position.x]])
 
             error_vect = pose_target - fk_position
 
