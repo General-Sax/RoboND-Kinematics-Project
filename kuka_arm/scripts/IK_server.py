@@ -200,45 +200,6 @@ def handle_calculate_IK(req):
 
             theta6 = N(atan2(-R3_6[1, 1], R3_6[1, 0]))
 
-            # if theta4 > 0 and theta6 > 0:
-            #     theta6 -= 2.0*pi
-            # elif theta4 < 0 and theta6 < 0:
-            #     theta6 += 2.0*pi
-
-            # Comparison to the previous pose is not available for the first pose in a sequence - at least without
-            # reference to additional pose information from ros. Comparison smoothing begins at x=1.
-
-            # if py < 0.15:
-            #     while theta4 > N(2*pi):
-            #         theta4 -= N(pi)
-            #         theta5 *= -1.0
-            #     while theta4 < 0:
-            #         theta4 += N(pi)
-            #         theta5 *= -1.0
-            # elif py > 0.15:
-            #     while theta4 < -N(2*pi):
-            #         theta4 += N(pi)
-            #         theta5 *= -1.0
-            #     while theta4 > 0:
-            #         theta4 -= N(pi)
-            #         theta5 *= -1.0
-
-
-
-            # if x != 0 and x != len(req.poses)-1:
-            #     while abs(theta4 - joint_trajectory_list[x-1].positions[3]) > N(pi):
-            #         if joint_trajectory_list[x-1].positions[3] > theta4:
-            #             theta4 += N(pi)
-            #             theta5 *= -1.0
-            #         elif joint_trajectory_list[x-1].positions[3] < theta4:
-            #             theta4 -= N(pi)
-            #             theta5 *= -1.0
-            #
-            #     while abs(theta6 - joint_trajectory_list[x-1].positions[5]) > N(pi):
-            #         if joint_trajectory_list[x-1].positions[5] > theta6:
-            #             theta6 += N(pi)
-            #         elif joint_trajectory_list[x-1].positions[5] < theta6:
-            #             theta6 -= N(pi)
 
 
             ###########
