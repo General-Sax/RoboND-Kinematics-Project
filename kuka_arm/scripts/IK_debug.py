@@ -19,7 +19,6 @@ from IK_server import handle_calculate_IK
 
 
 # single pose test cases
-    angles = tuple(handle_calculate_IK(req, debug_return=True)[0].positions)
     theta1, theta2, theta3, theta4, theta5, theta6 = angles
 
     ########################################################################################
@@ -189,6 +188,7 @@ def debug_code(test_case):
  
 	start_time = time()
 	
+	ik_angles = handle_calculate_IK(req)[0].positions
 	check_joint_limits(ik_angles)
 if __name__ == "__main__":
     # print "\n\nTest initializing at time: {}".format(strftime('%H:%M:%S'))
