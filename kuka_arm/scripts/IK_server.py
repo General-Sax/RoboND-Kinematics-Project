@@ -36,7 +36,6 @@ import numpy as np
 # Since sympy versions of sqrt, sin and cos are not used in the live code there isn't any namespace ambiguity
 from numpy import sin, cos, sqrt
 
-record_error_log=True
 
 def handle_calculate_IK(req):
     '''
@@ -49,7 +48,6 @@ def handle_calculate_IK(req):
         print "No valid poses received"
         return -1
     else:
-
         # Rather than construct an error correction transform for the coordinate
         # system mismatch by evaluating substitutions numerically, which leads
         # to small but avoidable error, I opted to solve it symbolically and
