@@ -3,27 +3,32 @@
 # Copyright (C) 2017 Electric Movement Inc.
 #
 # This file is part of Robotic Arm: Pick and Place project for Udacity
-# Robotics nano-degree program
+# Robotics Software Engineering Nanodegree program
 #
 # All Rights Reserved.
 
 # Author: Harsh Pandya
 
+# Student contributor: Joel Tiura
+
 # import modules
 import rospy
-import tf
+from tf.transformations import euler_from_quaternion
+
 from kuka_arm.srv import *
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from geometry_msgs.msg import Pose
 
-from sympy import symbols, sin, cos, sqrt, simplify, atan2, N, acos, pi
-from sympy.matrices import Matrix, eye
+import time
+# import os
 
+# from sympy import symbols, sin, cos, sqrt, simplify, atan2, N, acos, pi
+# from sympy.matrices import Matrix, eye
 import numpy as np
 
-# import os
-# import pickle
-import csv
+# There's a lot of dense trig expressions ahead so I'll also directly import these for readability
+# Since sympy versions of sqrt, sin and cos are not used in the live code there isn't any namespace ambiguity
+from numpy import sin, cos, sqrt
 
 record_error_log=True
 
