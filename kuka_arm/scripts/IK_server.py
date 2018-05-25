@@ -22,8 +22,14 @@ from geometry_msgs.msg import Pose
 import time
 # import os
 
+# TODO: matrix constructor functions and pickled matrices (perhaps in another module?):
+# re-implement sympy matrix derivations from jupyter notebooks as automatic constructor functions;
+# include functionality to pickle these so that they can be loaded faster and into other code.
+# enhances reproducibility and transparency of algorithm.
+
 # from sympy import symbols, sin, cos, sqrt, simplify, atan2, N, acos, pi
 # from sympy.matrices import Matrix, eye
+
 import numpy as np
 
 # There's a lot of dense trig expressions ahead so I'll also directly import these for readability
