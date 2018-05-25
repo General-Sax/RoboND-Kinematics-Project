@@ -43,6 +43,8 @@ def handle_calculate_IK(req):
     :return: CalculateIKResponse(joint_trajectory_list) [list of list of floats representing joint angles]
     '''
 
+    # record start time
+    t_start = time.time()
     rospy.loginfo("Received %s eef-poses from the plan" % len(req.poses))
     if len(req.poses) < 1:
         print "No valid poses received"
@@ -53,85 +55,82 @@ def handle_calculate_IK(req):
         # to small but avoidable error, I opted to solve it symbolically and
         # bake it into the total end effector transform matrix.
 
-        r, p, y = symbols('r p y') # r, p, y later substituted for EE roll, pitch, and yaw respectively
+        def construct_R_EE(orientation):
+            '''
+            :param orientation: tuple containing roll, pitch, and yaw values extracted with the tf.
+            :return:
+            '''
+            # R_EE is a precise symbolically-derived ('pre-fab') end effector orientation matrix.
+            # Includes a correction for coordinate system mismatch included by multiplying in the matrix:
+            #
+            # R_corr = Matrix([[ 0,  0,  1],
+            #                  [ 0, -1,  0],
+            #                  [ 1,  0,  0]])
 
-        # R_EE is a 'prefabricated' end effector orientation matrix w/correction for coordinate system mismatch/
-        # Corrected using precisely-derived matrix R_corr, below:
-        R_EE = Matrix([
-            [sin(p)*cos(r)*cos(y) + sin(r)*sin(y), -sin(p)*sin(r)*cos(y) + sin(y)*cos(r), cos(p)*cos(y)],
-            [sin(p)*sin(y)*cos(r) - sin(r)*cos(y), -sin(p)*sin(r)*sin(y) - cos(r)*cos(y), sin(y)*cos(p)],
-            [                       cos(p)*cos(r),                        -sin(r)*cos(p),       -sin(p)]])
-        # R_corr = Matrix([
-        #     [ 0,  0,  1],
-        #     [ 0, -1,  0],
-        #     [ 1,  0,  0]])
+            # from the pose orientation quaternion with tf.e
 
-        j3_radius = 1.501 # = N(sqrt(dh[a2]**2 + dh[d4]**2)), (rounded)
-        j4_correction = 0.036 # = N(atan2(0.054, 1.50)), (rounded)
+            # roll, pitch, and yaw are intended to be the values extracted
 
-        ### Your FK code here
+            r, p, y = orientation
 
-        ## Create symbols
-        q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')  # theta angles
-        # d1, d2, d3, d4, d5, d6, d7 = symbols('d1:8')
-        # a0, a1, a2, a3, a4, a5, a6 = symbols('a0:7')
-        # alpha0, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6 = symbols('alpha0:7')
-        #
-        # ee_position = ([
-        #     [-0.303*(sin(q1)*sin(q4) + sin(q2 + q3)*cos(q1)*cos(q4))*sin(q5) + (1.25*sin(q2) - 0.054*sin(q2 + q3) + 1.5*cos(q2 + q3) + 0.35)*cos(q1) + 0.303*cos(q1)*cos(q5)*cos(q2 + q3)],
-        #     [-0.303*(sin(q1)*sin(q2 + q3)*cos(q4) - sin(q4)*cos(q1))*sin(q5) + (1.25*sin(q2) - 0.054*sin(q2 + q3) + 1.5*cos(q2 + q3) + 0.35)*sin(q1) + 0.303*sin(q1)*cos(q5)*cos(q2 + q3)],
-        #     [-0.303*sin(q5)*cos(q4)*cos(q2 + q3) - 0.303*sin(q2 + q3)*cos(q5) - 1.5*sin(q2 + q3) + 1.25*cos(q2) - 0.054*cos(q2 + q3) + 0.75]])
-    	#
-    	## Create Modified DH parameter table:
-        # dh = {alpha0: 0,        a0: 0,      d1: 0.75,   q1: q1,
-        #       alpha1: -pi / 2,  a1: 0.35,   d2: 0,      q2: q2 - pi / 2.,
-        #       alpha2: 0,        a2: 1.25,   d3: 0,      q3: q3,
-        #       alpha3: -pi / 2,  a3: -0.054, d4: 1.50,   q4: q4,
-        #       alpha4: pi / 2,   a4: 0,      d5: 0,      q5: q5,
-        #       alpha5: -pi / 2,  a5: 0,      d6: 0,      q6: q6,
-        #       alpha6: 0,        a6: 0,      d7: 0.303,  q7: 0
-        #       }
-    	## Define Modified DH Transformation matrix
-    	#
-    	#
-    	## Create individual transformation matrices
-    	def checkError_EE(theta_list, pose):
-            sin = np.math.sin
-            cos = np.math.sin
+            cos_p = cos(p)
+            sin_p = sin(p)
+            cos_y = cos(y)
+            sin_y = sin(y)
+            cos_r = cos(r)
+            sin_r = sin(r)
 
+            # substitute:
+            R_EE = np.array([
+                [sin_p * cos_r * cos_y + sin_r * sin_y, -sin_p * sin_r * cos_y + sin_y * cos_r, cos_p * cos_y],
+                [sin_p * sin_y * cos_r - sin_r * cos_y, -sin_p * sin_r * sin_y - cos_r * cos_y, sin_y * cos_p],
+                [cos_p * cos_r, -sin_r * cos_p, -sin_p]],
+                dtype=np.float64)
+            return R_EE
+
+        # Define Error Analysis Function
+        def evaluate_EE_error(theta_list, pose):
+            '''
+            :param theta_list: calculated values for joints 1:6 in ascending order
+            :param pose: pose object contained in req.poses for which the
+            :return:
+            '''
             q1n, q2n, q3n, q4n, q5n, q6n = theta_list
 
             # fk_position is the translation vector from the total homogeneous transform
             # between the base and the end effector; this representation has frame error
             # correction baked in!
             fk_position = np.array([
-                [-0.303*(sin(q1n)*sin(q4n) + sin(q2n + q3n)*cos(q1n)*cos(q4n))*sin(q5n) + (1.25*sin(q2n) - 0.054*sin(q2n + q3n) + 1.5*cos(q2n + q3n) + 0.35)*cos(q1n) + 0.303*cos(q1n)*cos(q5n)*cos(q2n + q3n)],
-                [-0.303*(sin(q1n)*sin(q2n + q3n)*cos(q4n) - sin(q4n)*cos(q1n))*sin(q5n) + (1.25*sin(q2n) - 0.054*sin(q2n + q3n) + 1.5*cos(q2n + q3n) + 0.35)*sin(q1n) + 0.303*sin(q1n)*cos(q5n)*cos(q2n + q3n)],
-                [-0.303*sin(q5n)*cos(q4n)*cos(q2n + q3n) - 0.303*sin(q2n + q3n)*cos(q5n) - 1.5*sin(q2n + q3n) + 1.25*cos(q2n) - 0.054*cos(q2n + q3n) + 0.75]])
+                [-0.303 * (sin(q1n) * sin(q4n) + sin(q2n + q3n) * cos(q1n) * cos(q4n)) * sin(q5n)
+                 + (1.25 * sin(q2n) - 0.054 * sin(q2n + q3n) + 1.5 * cos(q2n + q3n) + 0.35) * cos(q1n)
+                 + 0.303 * cos(q1n) * cos(q5n) * cos(q2n + q3n)],
+                [-0.303 * (sin(q1n) * sin(q2n + q3n) * cos(q4n) - sin(q4n) * cos(q1n)) * sin(q5n)
+                 + (1.25 * sin(q2n) - 0.054 * sin(q2n + q3n) + 1.5 * cos(q2n + q3n) + 0.35) * sin(q1n)
+                 + 0.303 * sin(q1n) * cos(q5n) * cos(q2n + q3n)],
+                [-0.303 * sin(q5n) * cos(q4n) * cos(q2n + q3n) - 0.303 * sin(q2n + q3n) * cos(q5n)
+                 - 1.5 * sin(q2n + q3n) + 1.25 * cos(q2n) - 0.054 * cos(q2n + q3n) + 0.75]], dtype=np.float64)
 
-            pose_target = np.array([[pose.position.z], [-pose.position.y], [pose.position.x]])
-
+            pose_target = np.array([[pose.position.x], [pose.position.y], [pose.position.z]])
             error_vect = pose_target - fk_position
-
-            xErr, yErr, zErr = error_vect[0], error_vect[1], error_vect[2]
-
-            absError = np.linalg.norm(error_vect)
+            xErr, yErr, zErr = error_vect[0][0], error_vect[1][0], error_vect[2][0]
+            absError = sqrt(error_vect[0][0] ** 2 + error_vect[1][0] ** 2 + error_vect[2][0] ** 2)
             return xErr, yErr, zErr, absError
 
-
-    	## Extract rotation matrices from the transformation matrices
-    	#
-    	#
-        ###
-
-        invR0_3 = Matrix([
-            [sin(q2 + q3)*cos(q1), sin(q1)*sin(q2 + q3),  cos(q2 + q3)],
-            [cos(q1)*cos(q2 + q3), sin(q1)*cos(q2 + q3), -sin(q2 + q3)],
-            [            -sin(q1),              cos(q1),             0]])
-
+        def construct_R0_3_inverse(q1, q2, q3):
+            R0_3_inverse = np.array([
+                [sin(q2 + q3) * cos(q1), sin(q1) * sin(q2 + q3), cos(q2 + q3)],
+                [cos(q1) * cos(q2 + q3), sin(q1) * cos(q2 + q3), -sin(q2 + q3)],
+                [-sin(q1), cos(q1), 0]],
+                dtype=np.float64)
+            return R0_3_inverse
 
         # Initialize service response
         joint_trajectory_list = []
+        # Initialize end effector position error list if logging is logging/plotting active
+
+        err_dict = {'x': [], 'y': [], 'z': [], 'abs': []}
+
+        # Loop through poses in requested sequence, and do IK calculation to determine the joint values for each:
         for x in xrange(0, len(req.poses)):
             joint_trajectory_point = JointTrajectoryPoint()
 
@@ -141,98 +140,144 @@ def handle_calculate_IK(req):
             py = req.poses[x].position.y
             pz = req.poses[x].position.z
 
-            # roll, pitch, yaw = end-effector orientation
-            (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(
-                [req.poses[x].orientation.x, req.poses[x].orientation.y,
-                 req.poses[x].orientation.z, req.poses[x].orientation.w])
+            # This accomplishes the same essential goal as req.poses[x].orientation.?attributes
+            quaternion_orientation = [
+                req.poses[x].orientation.x,
+                req.poses[x].orientation.y,
+                req.poses[x].orientation.z,
+                req.poses[x].orientation.w,
+            ]
+
+            # Extract roll, pitch, and yaw from the orientation quaternion using method from tf.transformations
+            # (roll, pitch, yaw) = euler_from_quaternion(quaternion_orientation)
+            r_EE = construct_R_EE(euler_from_quaternion(quaternion_orientation))
+
+            # r_EE is the rotational component of the transformation matrix between the base coord
+            # roll, pitch, and yaw specify end-effector orientation relative to the base coordinate system,
+            # but only when the corresponding sequence of rotations is applied with respect to static coordinates, and
+            # in an XYZ axis order.
+            #
+            # This sequence and convention is not a coincidence; it's the is the default behavior of the
+            # tf.transformations.euler_from_quaternion() function.
+
+            # (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(
+            #     [req.poses[x].orientation.x,
+            #      req.poses[x].orientation.y,
+            #      req.poses[x].orientation.z,
+            #      req.poses[x].orientation.w])
+
+            # while the wrist center's location is not specified explicitly, it is already determined
+            # *implicitly* by the specified end effector orientation.
+
+            # (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(
+            #     [req.poses[x].orientation.x, req.poses[x].orientation.y,
+            #      req.poses[x].orientation.z, req.poses[x].orientation.w])
             # these values of roll, pitch, and yaw are calculated using the 'sxyz' convention in tf,
             # s denotes static frame, xyz gives an axis sequence for the rotations
 
-            # R_EE is the general symbolic rotation matrix for the end effector orientation, defined outside loop.
-            # Rrpy represents this matrix for a given pose, substituting in the roll, pitch, and yaw variables
+            # r_EE is the general symbolic rotation matrix for the end effector orientation, defined outside loop.
+            # r_EE represents this matrix for a given pose, substituting in the roll, pitch, and yaw variables
             # extracted from the pose orientation quaternion.
-            Rrpy = R_EE.subs({r: roll, p: pitch, y: yaw})
 
             # Calculate wrist center location
-            EE_vector = 0.303 * Rrpy[0:3, 2]
+            EE_vector = 0.303 * r_EE[:, 2]
 
             wrist_x = px - EE_vector[0]
             wrist_y = py - EE_vector[1]
             wrist_z = pz - EE_vector[2]
 
-            theta1 = N(atan2(wrist_y, wrist_x))
+            theta1 = np.arctan2(wrist_y, wrist_x)
 
-            wrist_s = N(sqrt(wrist_x**2 + wrist_y**2))
+            wrist_s = sqrt(wrist_x ** 2 + wrist_y ** 2)
 
             # delta_s_behind = -1.0 * (wrist_s + 0.35)
             delta_s = wrist_s - 0.35
             delta_z = wrist_z - 0.75
 
             # j2_pitch_behind = N(atan2(delta_z, delta_s_behind))
-            j2_pitch = N(atan2(delta_z, delta_s))
+            j2_pitch = np.arctan2(delta_z, delta_s)
 
             # Triangle Solver
-            A, B, a, b, c = symbols('A B a b c') # A, B are needed interior angles; a, b, c are side lengths
-            j2_wrist_dist = N(sqrt(delta_s**2 + delta_z**2)) # distance from joint_2 to wrist center - side b length
-            sides = {
-                a: j3_radius,       # j3_radius defined outside loop = 1.501
-                b: j2_wrist_dist,
-                c: 1.25
-                }
-            A = acos((b**2 + c**2 - a**2)/(2 * b * c)).evalf(subs=sides)
-            B = acos((a**2 + c**2 - b**2)/(2 * a * c)).evalf(subs=sides)
+            # A, B, a, b, c = symbols('A B a b c') # A, B are needed interior angles; a, b, c are side lengths
 
-            theta2 = N(pi/2 - j2_pitch - A)
-            theta3 = N(pi/2 - (B + j4_correction)) # j4_correction defined outside loop = 0.036
+            # j2_wrist_dist is the only side of said triangle not actually measured along links of the manipulator,
+            # formed by the line between the midpoint/origin of joint_2 to wrist center
+            j2_wrist_dist = sqrt(
+                delta_s ** 2 + delta_z ** 2)  # distance from joint_2 to wrist center - side b length.
 
-            # R0_3_inverse is calculated by substituting the first three joint angles into a template, invR0_3;
-            # invR0_3 is invariant up to the following substitution, and thus is defined outside the loop
-            R0_3_inverse = invR0_3.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+            # Triangle with side lengths:
+            #     a: 1.500971685275908, the distance betweenj2_wrist_dist defined outside loop = 1.500971685275908
+            #     b: j2_wrist_dist,
+            #     c: 1.25
+            #     }
+            A = np.arccos((j2_wrist_dist ** 2 + 1.25 ** 2 - 1.501 ** 2) / (2 * j2_wrist_dist * 1.25))
+            B = np.arccos((1.501 ** 2 + 1.25 ** 2 - j2_wrist_dist ** 2) / (2 * 1.501 * 1.25))
 
-            R3_6 = R0_3_inverse * Rrpy
+            theta2 = (np.pi / 2 - j2_pitch - A)
+            theta3 = np.pi / 2 - (B + 0.036)  # j4_correction defined outside loop = 0.036
 
-            theta5 = N(atan2(sqrt(R3_6[0, 2]*R3_6[0, 2] + R3_6[2, 2]*R3_6[2, 2]), R3_6[1, 2]))
+            # R0_3_inverse is constructed by passing the first three joint angles to the  substituting the first three
+            # joint angles into a template, R0_3_inverse_template
+            # invR0_3 is always equivalent to the same expression, making the template matrix reusable for each pose
+            # up to the following substitution, and thus is defined outside the loop
 
-            theta4 = N(atan2(R3_6[2, 2], -R3_6[0, 2]))
+            # R0_3_inverse is the (reciprocal) inverse of the rotational transform R0_3, matrix
+            R0_3_inverse = construct_R0_3_inverse(theta1, theta2, theta3)
 
-            theta6 = N(atan2(-R3_6[1, 1], R3_6[1, 0]))
+            # The very first step is to arbitrarily constrain the wrist center's motion
+            # By matrix multiplying R0_3_inverse onto r_EE, the original orientation vector, we are left with
+            R3_6 = R0_3_inverse.dot(r_EE)
 
+            # theta4, theta5, and theta6 are all determined at this point, since we now have the inverse transform may
+            # be isolated from solved for symbolically
+            theta5 = np.math.atan2(sqrt(R3_6[0, 2] * R3_6[0, 2] + R3_6[2, 2] * R3_6[2, 2]), R3_6[1, 2])
+            theta4 = np.math.atan2(R3_6[2, 2], -R3_6[0, 2])
+            theta6 = np.math.atan2(-R3_6[1, 1], R3_6[1, 0])
 
+            x_err, y_err, z_err, abs_err = evaluate_EE_error([theta1, theta2, theta3, theta4, theta5, theta6],
+                                                             req.poses[x])
 
-            ###########
-
-            if record_error_log:
-                xErr, yErr, zErr, absErr = checkError_EE([theta1, theta2, theta3, theta4, theta5, theta6], req.poses[x])
-
-                with open('position_error_log.csv', 'a') as err_log:
-                    writer = csv.writer(err_log)
-                    writer.writerow([x+1, xErr, yErr, zErr, absErr])
+            err_dict['x'].append(x_err)
+            err_dict['y'].append(y_err)
+            err_dict['z'].append(z_err)
+            err_dict['abs'].append(abs_err)
 
             # Populate response for the IK request
             joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
             joint_trajectory_list.append(joint_trajectory_point)
 
 
+        x_err_max = max(err_dict['x'])
+        x_err_mean = np.mean(err_dict['x'])
+
+        y_err_max = max(err_dict['y'])
+        y_err_mean = np.mean(err_dict['y'])
+
+        z_err_max = max(err_dict['z'])
+        z_err_mean = np.mean(err_dict['z'])
+
+        abs_err_max = max(err_dict['abs'])
+        abs_err_mean = np.mean(err_dict['abs'])
+
+        rospy.loginfo('Error Maxima\n x: {}\n y: {}\n z: {}\n abs: {}\n'.format(x_err_max, y_err_max, z_err_max, abs_err_max))
+        rospy.loginfo('Error Means\n x: {}\n y: {}\n z: {}\n abs: {}\n'.format(x_err_mean, y_err_mean, z_err_mean, abs_err_mean))
 
 
-        rospy.loginfo("length of Joint Trajectory List: %s" % len(joint_trajectory_list))
+        rospy.loginfo("Final length of Joint Trajectory List: %s" % len(joint_trajectory_list))
+        rospy.loginfo("Full compute time (with overhead): %s" % (time.time() - t_start))
+        rospy.loginfo("Mean compute time per pose: {}\n".format((time.time() - t_start) / len(joint_trajectory_list)))
 
-        if debug_return:
+        if __name__ != "__main__":
             return joint_trajectory_list
 
         return CalculateIKResponse(joint_trajectory_list)
 
 
 def IK_server():
-    if record_error_log:
-        with open('position_error_log.csv', 'w') as err_log:
-            writer = csv.writer(err_log)
-            writer.writerow(["Pose Number", "EEx err", "EEy err", "EEz err", "Abs err"])
-
     # initialize node and declare calculate_ik service
     rospy.init_node('IK_server')
     s = rospy.Service('calculate_ik', CalculateIK, handle_calculate_IK)
-    print "Ready to receive an IK request"
+    print "Ready to receive an IK request\n"
     rospy.spin()
 
 if __name__ == "__main__":
