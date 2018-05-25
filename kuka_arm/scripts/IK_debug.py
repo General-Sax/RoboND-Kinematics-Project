@@ -21,7 +21,6 @@ from IK_server import handle_calculate_IK
 # single pose test cases
     ## Set up code
     ## Do not modify!
-    x = 0
     class Position:
         def __init__(self,EE_pos):
             self.x = EE_pos[0]
