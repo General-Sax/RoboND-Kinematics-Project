@@ -19,20 +19,6 @@ from IK_server import handle_calculate_IK
 
 
 # single pose test cases
-    ## Set up code
-    ## Do not modify!
-
-    position = Position(test_case[0][0])
-    orientation = Orientation(test_case[0][1])
-    comb = Combine(position,orientation)
-
-    class Pose:
-        def __init__(self,comb):
-            self.poses = [comb]
-
-    req = Pose(comb)
-    start_time = time()
-
     ############################################################################
     # IK function 'handle_calculate_IK' imported from
 
@@ -168,7 +154,24 @@ class Combine:
 		self.position = position
 		self.orientation = orientation
 
+
+class Pose:
+	def __init__(self, comb):
+		self.poses = [comb]
+
+
+
 def debug_code(test_case):
+	# Set up code
+	# Do not modify!
+	
+	position = Position(test_case[0][0])
+	orientation = Orientation(test_case[0][1])
+	comb = Combine(position, orientation)
+	req = Pose(comb)
+ 
+	start_time = time()
+	
 if __name__ == "__main__":
     # print "\n\nTest initializing at time: {}".format(strftime('%H:%M:%S'))
     print "\n"+(40 * '*v')+" BEGIN"
