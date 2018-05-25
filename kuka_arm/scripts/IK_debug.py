@@ -19,7 +19,6 @@ from IK_server import handle_calculate_IK
 
 
 # single pose test cases
-def test_code(test_case):
     ## Set up code
     ## Do not modify!
     x = 0
@@ -167,6 +166,7 @@ test_cases = {
 }
 
 
+def debug_code(test_case):
 if __name__ == "__main__":
     # print "\n\nTest initializing at time: {}".format(strftime('%H:%M:%S'))
     print "\n"+(40 * '*v')+" BEGIN"
@@ -176,7 +176,6 @@ if __name__ == "__main__":
         if test_cases[number]:
             print "\n" + 40 * "- "+ str(number)
             print "Running test case {}...".format(number)
-            test_code(test_cases[number])
     print "\nTest completed at time: {}".format(strftime('%H:%M:%S'))
     print 40 * '*^' + " END \n"
 
@@ -185,3 +184,4 @@ if __name__ == "__main__":
 #     test_case_number = 1
 
 #     test_code(test_cases[test_case_number])
+			debug_code(test_cases[number])
