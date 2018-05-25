@@ -1,18 +1,22 @@
-from sympy import *
-from time import time, strftime
-from mpmath import radians
-import tf
-import numpy as np
-
-from IK_server import handle_calculate_IK
-
-
 '''
 Format of test case is [ [[EE position],[EE orientation as quaternions]],[WC location],[joint angles]]
 You can generate additional test cases by setting up your kuka project and running `$ roslaunch kuka_arm forward_kinematics.launch`
 From here you can adjust the joint angles to find thetas, use the gripper to extract positions and orientation (in quaternion xyzw) and lastly use link 5
 to find the position of the wrist center. These newly generated test cases can be added to the test_cases dictionary.
 '''
+import collections
+from pprint import pprint
+
+from sympy import *
+from time import time, strftime
+
+# from mpmath import radians
+# import tf
+# import numpy as np
+# from __future__ import print_function
+
+from IK_server import handle_calculate_IK
+
 
 # single pose test cases
 test_cases = {0:[[[2.1529, 0, 1.9465],
