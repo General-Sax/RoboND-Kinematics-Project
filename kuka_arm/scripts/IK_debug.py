@@ -19,25 +19,8 @@ from IK_server import handle_calculate_IK
 
 
 # single pose test cases
-    ############################################################################
-    # IK function 'handle_calculate_IK' imported from
-
     angles = tuple(handle_calculate_IK(req, debug_return=True)[0].positions)
     theta1, theta2, theta3, theta4, theta5, theta6 = angles
-
-    jointLimits = {1: (-3.2288591161895095, 3.2288591161895095),
-                   2: (-0.7853981633974483, 1.4835298641951802),
-                   3: (-3.6651914291880923, 1.1344640137963142),
-                   4: (-6.1086523819801535, 6.1086523819801535),
-                   5: (-2.181661564992912, 2.181661564992912),
-                   6: (-6.1086523819801535, 6.1086523819801535)}
-
-    for i in range(1, 7):
-        if angles[i-1] > jointLimits[i][0] and angles[i-1] < jointLimits[i][1]:
-            pass
-        else:
-            print "\n*** Angle theta"+str(i)+" outside joint range! ***"
-            print "Range:", jointLimits[i], "Theta:", angles[i-1], "\n"
 
     ########################################################################################
     ## For additional debugging add your forward kinematics here. Use your previously calculated thetas
@@ -134,6 +117,40 @@ test_cases = {
 }
 
 
+def check_joint_limits(theta_list, stdout=False, raise_exception=False):
+	'''
+	
+	:param theta_list:
+	:param stdout:
+	:param raise_exception:
+	:return:
+	'''
+	assert isinstance(theta_list, collections.Iterable)
+	assert len(theta_list) == 6
+	
+	joint_range_limits = {
+	    1: (-3.2288591161895095, 3.2288591161895095),
+	    2: (-0.7853981633974483, 1.4835298641951802),
+	    3: (-3.6651914291880923, 1.1344640137963142),
+	    4: (-6.1086523819801535, 6.1086523819801535),
+	    5: (-2.181661564992912, 2.181661564992912),
+	    6: (-6.1086523819801535, 6.1086523819801535)
+	}
+	violations = []
+	for i, angle in enumerate(theta_list):
+		i+=1
+		if not (joint_range_limits[i][0] <= angle <= joint_range_limits[i][1]):
+			report = "\n*** Angle theta" + str(i) + " outside joint range! ***"
+			report += "Range: " + str(joint_range_limits[i]) + " | Theta: " + str(angle) + "\n"
+			if raise_exception:
+				raise RuntimeError(report)
+			elif stdout:
+				pprint(report)
+			else:
+				violations.append(i)
+	return
+ 
+ 
 class Position:
 	def __init__(self, EE_pos):
 		self.x = EE_pos[0]
@@ -172,6 +189,7 @@ def debug_code(test_case):
  
 	start_time = time()
 	
+	check_joint_limits(ik_angles)
 if __name__ == "__main__":
     # print "\n\nTest initializing at time: {}".format(strftime('%H:%M:%S'))
     print "\n"+(40 * '*v')+" BEGIN"
