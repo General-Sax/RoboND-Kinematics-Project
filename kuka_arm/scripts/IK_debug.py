@@ -51,10 +51,6 @@ from IK_server import handle_calculate_IK
     # your_ee = [fk_EE[0], fk_EE[1], fk_EE[2]] # <--- Load your calculated end effector value from your forward kinematics
     your_ee = list(end_effector)
     ########################################################################################
-
-    ## Error analysis
-    print ("\nTotal run time to calculate joint angles from pose is %04.4f seconds" % (time()-start_time))
-
     # Find WC error
     if not(sum(your_wc)==3):
         wc_x_e = abs(your_wc[0]-test_case[1][0])
@@ -188,7 +184,13 @@ def debug_code(test_case):
  
 	start_time = time()
 	
+	############################################################################
+	# IK function 'handle_calculate_IK' imported from IK_server.py
+	
 	ik_angles = handle_calculate_IK(req)[0].positions
+	
+	## Error analysis
+	print ("\nTotal run time to calculate joint angles from pose is %04.4f seconds" % (time()-start_time))
 	check_joint_limits(ik_angles)
 if __name__ == "__main__":
     # print "\n\nTest initializing at time: {}".format(strftime('%H:%M:%S'))
