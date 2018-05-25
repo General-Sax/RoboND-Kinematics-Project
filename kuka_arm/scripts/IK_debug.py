@@ -24,12 +24,6 @@ from IK_server import handle_calculate_IK
 
     position = Position(test_case[0][0])
     orientation = Orientation(test_case[0][1])
-
-    class Combine:
-        def __init__(self,position,orientation):
-            self.position = position
-            self.orientation = orientation
-
     comb = Combine(position,orientation)
 
     class Pose:
@@ -168,6 +162,11 @@ class Orientation:
 		self.z = EE_ori[2]
 		self.w = EE_ori[3]
 
+
+class Combine:
+	def __init__(self, position, orientation):
+		self.position = position
+		self.orientation = orientation
 
 def debug_code(test_case):
 if __name__ == "__main__":
