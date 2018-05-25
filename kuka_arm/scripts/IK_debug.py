@@ -21,11 +21,6 @@ from IK_server import handle_calculate_IK
 # single pose test cases
     ## Set up code
     ## Do not modify!
-    class Position:
-        def __init__(self,EE_pos):
-            self.x = EE_pos[0]
-            self.y = EE_pos[1]
-            self.z = EE_pos[2]
     class Orientation:
         def __init__(self,EE_ori):
             self.x = EE_ori[0]
@@ -165,6 +160,11 @@ test_cases = {
 }
 
 
+class Position:
+	def __init__(self, EE_pos):
+		self.x = EE_pos[0]
+		self.y = EE_pos[1]
+		self.z = EE_pos[2]
 def debug_code(test_case):
 if __name__ == "__main__":
     # print "\n\nTest initializing at time: {}".format(strftime('%H:%M:%S'))
