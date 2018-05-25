@@ -133,11 +133,10 @@ def handle_calculate_IK(req):
         # Initialize service response
         joint_trajectory_list = []
         for x in xrange(0, len(req.poses)):
-            # IK code starts here
             joint_trajectory_point = JointTrajectoryPoint()
 
             # Extract end-effector position and orientation from request
-	        # px,py,pz = end-effector position
+            # (px ,py, pz) is the end-effector position in the base reference frame
             px = req.poses[x].position.x
             py = req.poses[x].position.y
             pz = req.poses[x].position.z
