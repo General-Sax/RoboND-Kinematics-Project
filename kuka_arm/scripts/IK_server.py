@@ -33,6 +33,11 @@ from numpy import sin, cos, sqrt
 record_error_log=True
 
 def handle_calculate_IK(req, debug_return=False):
+    '''
+    :param req: target end-effector position/orientation specified by the rospy geometry_msgs.msg/Pose message type
+    :return: CalculateIKResponse(joint_trajectory_list) [list of list of floats representing joint angles]
+    '''
+
     rospy.loginfo("Received %s eef-poses from the plan" % len(req.poses))
     if len(req.poses) < 1:
         print "No valid poses received"
