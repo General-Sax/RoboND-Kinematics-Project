@@ -91,6 +91,10 @@ class Pose:
 ########################################################################################
 
 def debug_code(test_case):
+	'''
+	:param test_case: one of the defined test cases available within this module
+	:return: None (but print lots of useful info)
+	'''
 	position = Position(test_case[0][0])
 	orientation = Orientation(test_case[0][1])
 	comb = Combine(position, orientation)
