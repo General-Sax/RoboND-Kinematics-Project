@@ -30,11 +30,7 @@ atan2 = np.arctan2
 
 
 
-import numpy as np
 
-# There's a lot of dense trig expressions ahead so I'll also directly import these for readability
-# Since sympy versions of sqrt, sin and cos are not used in the live code there isn't any namespace ambiguity
-from numpy import sin, cos, sqrt
 
 
 def handle_calculate_IK(req):
