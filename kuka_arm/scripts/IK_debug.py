@@ -41,9 +41,6 @@ def check_joint_limits(theta_list, stdout=False, raise_exception=False):
 	:param raise_exception:
 	:return:
 	'''
-	assert isinstance(theta_list, collections.Iterable)
-	assert len(theta_list) == 6
-	
 	joint_range_limits = {
 	    1: (-3.2288591161895095, 3.2288591161895095),
 	    2: (-0.7853981633974483, 1.4835298641951802),
