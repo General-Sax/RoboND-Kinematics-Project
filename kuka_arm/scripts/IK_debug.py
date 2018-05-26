@@ -4,17 +4,11 @@ You can generate additional test cases by setting up your kuka project and runni
 From here you can adjust the joint angles to find thetas, use the gripper to extract positions and orientation (in quaternion xyzw) and lastly use link 5
 to find the position of the wrist center. These newly generated test cases can be added to the test_cases dictionary.
 '''
-import collections
-from pprint import pprint
 
-from sympy import *
+from pprint import pprint
 from time import time, strftime
 
-# from mpmath import radians
-# import tf
-# import numpy as np
-# from __future__ import print_function
-
+from sympy import *
 from IK_server import handle_calculate_IK
 
 
