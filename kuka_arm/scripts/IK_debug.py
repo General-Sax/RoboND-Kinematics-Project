@@ -137,21 +137,7 @@ def debug_code(test_case):
 	# your_ee = [fk_EE[0], fk_EE[1], fk_EE[2]] # <--- Load your calculated end effector value from your forward kinematics
 	calculated_ee = list(fk_EE)
 	########################################################################################
-	
 	## Error analysis
-	print ("\nTotal run time to calculate joint angles from pose is %04.4f seconds" % (time()-start_time))
-	
-	# Find WC error
-	if not(sum(calculated_wc)==3):
-		wc_x_e = abs(calculated_wc[0] - test_case[1][0])
-		wc_y_e = abs(calculated_wc[1] - test_case[1][1])
-		wc_z_e = abs(calculated_wc[2] - test_case[1][2])
-		wc_offset = sqrt(wc_x_e**2 + wc_y_e**2 + wc_z_e**2)
-		print ("\nWrist error for x position is: %04.8f" % wc_x_e)
-		print ("Wrist error for y position is: %04.8f" % wc_y_e)
-		print ("Wrist error for z position is: %04.8f" % wc_z_e)
-		print ("Overall wrist offset is: %04.8f units" % wc_offset)
-	
 	# calculate theta errors
 	t_1_e = abs(theta1 - test_case[2][0])
 	t_2_e = abs(theta2 - test_case[2][1])
@@ -159,18 +145,13 @@ def debug_code(test_case):
 	t_4_e = abs(theta4 - test_case[2][3])
 	t_5_e = abs(theta5 - test_case[2][4])
 	t_6_e = abs(theta6 - test_case[2][5])
-	print ("\nTheta 1 error is: %04.8f" % t_1_e)
-	print ("Theta 2 error is: %04.8f" % t_2_e)
-	print ("Theta 3 error is: %04.8f" % t_3_e)
-	print ("Theta 4 error is: %04.8f" % t_4_e)
-	print ("Theta 5 error is: %04.8f" % t_5_e)
-	print ("Theta 6 error is: %04.8f" % t_6_e)
-	print ("Theta 1 Calculated : %04.2f" % theta1, " Actual : ", test_case[2][0])
-	print ("Theta 2 Calculated : %04.3f" % theta2, " Actual : ", test_case[2][1])
-	print ("Theta 3 Calculated : %04.2f" % theta3, " Actual : ", test_case[2][2])
-	print ("Theta 4 Calculated : %04.2f" % theta4, " Actual : ", test_case[2][3])
-	print ("Theta 5 Calculated : %04.2f" % theta5, " Actual : ", test_case[2][4])
-	print ("Theta 6 Calculated : %04.2f" % theta6, " Actual : ", test_case[2][5])
+	
+	print ("theta1 error: {:.5f};  ( Calculated / Actual ): ( {:6.3f} / {:6.3f} )".format(t_1_e, theta1, test_case[2][0]))
+	print ("theta2 error: {:.5f};  ( Calculated / Actual ): ( {:6.3f} / {:6.3f} )".format(t_2_e, theta2, test_case[2][1]))
+	print ("theta3 error: {:.5f};  ( Calculated / Actual ): ( {:6.3f} / {:6.3f} )".format(t_3_e, theta3, test_case[2][2]))
+	print ("theta4 error: {:.5f};  ( Calculated / Actual ): ( {:6.3f} / {:6.3f} )".format(t_4_e, theta4, test_case[2][3]))
+	print ("theta5 error: {:.5f};  ( Calculated / Actual ): ( {:6.3f} / {:6.3f} )".format(t_5_e, theta5, test_case[2][4]))
+	print ("theta6 error: {:.5f};  ( Calculated / Actual ): ( {:6.3f} / {:6.3f} )".format(t_6_e, theta6, test_case[2][5]))
 
 	# Find FK EE error
 	if not(sum(calculated_ee) == 3):
@@ -181,7 +162,18 @@ def debug_code(test_case):
 		print ("\nEnd effector error for x position is: %04.8f" % x_err)
 		print ("End effector error for y position is: %04.8f" % y_err)
 		print ("End effector error for z position is: %04.8f" % z_err)
-		print ("Overall end effector offset is: %04.8f units \n" % ee_offset)
+		print ("Overall end effector offset is: %04.8f meters" % ee_offset)
+
+	# Find WC error
+	if not(sum(calculated_wc)==3):
+		wc_x_e = abs(calculated_wc[0] - test_case[1][0])
+		wc_y_e = abs(calculated_wc[1] - test_case[1][1])
+		wc_z_e = abs(calculated_wc[2] - test_case[1][2])
+		wc_offset = sqrt(wc_x_e**2 + wc_y_e**2 + wc_z_e**2)
+		print ("\nWrist error for x position is: %04.8f" % wc_x_e)
+		print ("Wrist error for y position is: %04.8f" % wc_y_e)
+		print ("Wrist error for z position is: %04.8f" % wc_z_e)
+		print ("Overall wrist offset is: %04.8f meters" % wc_offset)
 
 
 if __name__ == "__main__":
