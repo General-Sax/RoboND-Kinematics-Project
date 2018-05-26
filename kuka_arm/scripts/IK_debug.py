@@ -107,8 +107,13 @@ def debug_code(test_case):
 
 	########################################################################################
 	## Error analysis
+	# Ensure that calculated angles are within the ranges specified in the URDF file
+	violations = check_joint_limits(ik_angles, stdout=False, raise_exception=False)
+	for report in violations:
+		print report
+
+	# Unpack calculated angles
 	theta1, theta2, theta3, theta4, theta5, theta6 = ik_angles
-	check_joint_limits(ik_angles)
 
 	## Forward kinematics implementation to verify results:
 	q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')  # theta angles
