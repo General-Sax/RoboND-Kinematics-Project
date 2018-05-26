@@ -64,12 +64,13 @@ def check_joint_limits(theta_list, stdout=False, raise_exception=False):
 	return violations
  
 
+########################################################################################
+# Define dummy objects to mimick the structure of an actual pose request
 class Position:
 	def __init__(self, EE_pos):
 		self.x = EE_pos[0]
 		self.y = EE_pos[1]
 		self.z = EE_pos[2]
-
 
 class Orientation:
 	def __init__(self, EE_ori):
@@ -102,18 +103,16 @@ def debug_code(test_case):
 	ik_angles = handle_calculate_IK(req)[0].positions
 
 	# immediately report time-to-result
+	print ("Total run time to calculate joint angles from pose is %04.8f seconds" % (time() - start_time))
 
 	########################################################################################
 	## Error analysis
-	print ("\nTotal run time to calculate joint angles from pose is %04.4f seconds" % (time()-start_time))
-	
 	theta1, theta2, theta3, theta4, theta5, theta6 = ik_angles
- 
 	check_joint_limits(ik_angles)
-	########################################################################################
+
 	## Forward kinematics implementation to verify results:
-	
 	q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')  # theta angles
+
 	# pre-derived wrist center position vector in terms of q1, q2, and q3 for comparison with
 	fk_wrist = Matrix([
 		[(1.25*sin(q2) - 0.054*sin(q2 + q3) + 1.5*cos(q2 + q3) + 0.35)*cos(q1)],
@@ -122,6 +121,7 @@ def debug_code(test_case):
     ])
 	   
 	fk_wrist = fk_wrist.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+
 	# fk_EE is the additive, translational component of the total homogeneous transform between the base
     # and the end effector; this column vector representation has frame error correction baked in!
 	fk_EE = Matrix([
