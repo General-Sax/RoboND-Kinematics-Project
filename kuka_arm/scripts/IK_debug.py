@@ -193,8 +193,8 @@ if __name__ == "__main__":
 	# Cycle through all provided debug requests
 	for number in sorted(test_cases.keys()):
 		if test_cases[number]:
-			print "\n" + 40 * "- " + str(number)
-			print "Running test case {}...".format(number)
+			print "\n| Test case {} |".format(number) + 32 * "- " + str(number)
+			# print "Test case {}:\n".format(number)
 			debug_code(test_cases[number])
 	print "\nTest completed at time: {}".format(strftime('%H:%M:%S'))
 	print 40 * '*^' + " END \n"
