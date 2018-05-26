@@ -11,16 +11,22 @@
 
 # Student contributor: Joel Tiura
 
-# import modules
-import rospy
-from tf.transformations import euler_from_quaternion
+import time
 
+import rospy
+import numpy as np
+
+from tf.transformations import euler_from_quaternion
 from kuka_arm.srv import *
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from geometry_msgs.msg import Pose
 
-import time
-# import os
+# There's a lot of dense trig expressions ahead so I'll also directly import these for readability
+# SymPy versions of sqrt, sin and cos are *NOT* used in the live code anywhere, so there isn't any namespace ambiguity
+sin = np.sin
+cos = np.cos
+sqrt = np.sqrt
+acos = np.arccos
+atan2 = np.arctan2
 
 # TODO: matrix constructor functions and pickled matrices (perhaps in another module?):
 # re-implement sympy matrix derivations from jupyter notebooks as automatic constructor functions;
