@@ -141,10 +141,12 @@ def debug_code(test_case):
 
 	########################################################################################
 	## For error analysis, the following names are given to the locations of the wrist center (wc) and
-	## end effector (ee) in the format of [x, y, z]
+	## end effector (ee) in the format: [x, y, z]
 	calculated_wc = list(fk_wrist) # <--- The calculated wc coordinates
-	# your_ee = [fk_EE[0], fk_EE[1], fk_EE[2]] # <--- Load your calculated end effector value from your forward kinematics
-	calculated_ee = list(fk_EE)
+
+	# calculated_ee = [fk_EE[0], fk_EE[1], fk_EE[2]]
+	calculated_ee = list(fk_EE) # <--- The calculated ee coordinates
+
 	########################################################################################
 	## Error analysis
 	# calculate theta errors
