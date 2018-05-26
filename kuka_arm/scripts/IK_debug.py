@@ -78,23 +78,18 @@ class Orientation:
 		self.z = EE_ori[2]
 		self.w = EE_ori[3]
 
-
 class Combine:
 	def __init__(self, position, orientation):
 		self.position = position
 		self.orientation = orientation
 
-
 class Pose:
 	def __init__(self, comb):
 		self.poses = [comb]
 
-
+########################################################################################
 
 def debug_code(test_case):
-	# Set up code
-	# Do not modify!
-	
 	position = Position(test_case[0][0])
 	orientation = Orientation(test_case[0][1])
 	comb = Combine(position, orientation)
@@ -102,11 +97,13 @@ def debug_code(test_case):
  
 	start_time = time()
 	
-	############################################################################
-	# IK function 'handle_calculate_IK' imported from IK_server.py
-	
+	########################################################################################
+	# IK function 'handle_calculate_IK' imported from IK_server.py directly
 	ik_angles = handle_calculate_IK(req)[0].positions
-	
+
+	# immediately report time-to-result
+
+	########################################################################################
 	## Error analysis
 	print ("\nTotal run time to calculate joint angles from pose is %04.4f seconds" % (time()-start_time))
 	
