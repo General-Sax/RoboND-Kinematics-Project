@@ -61,9 +61,9 @@ def check_joint_limits(theta_list, stdout=False, raise_exception=False):
 				pprint(report)
 			else:
 				violations.append(i)
-	return
+	return violations
  
- 
+
 class Position:
 	def __init__(self, EE_pos):
 		self.x = EE_pos[0]
