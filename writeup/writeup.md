@@ -1,26 +1,7 @@
+# Robotics Nanodegree Project 2: KR210 Serial Manipulator Kinematics
+## Joel Tiura
 
-# Pick & Place (Kinematics)
-
-UDACITY GITHUB: https://github.com/udacity/RoboND-Kinematics-Project
-
-MY GITHUB: https://github.com/general-sax/RoboND-Kinematics-Project
-
-RUBRIC: https://review.udacity.com/#!/rubrics/972/view
-
-WALKTHROUGH: https://www.youtube.com/watch?v=Gt8DRm-REt4
-
-
-## What to include in your submission
-You may submit your project as a zip file or with a link to a GitHub repo. The submission must include these items:
-    - IK_server.py file with your code (make sure to add comments at appropriate places in your code)
-    - Writeup report (md or pdf file)
-
-## Project: Kinematics Pick & Place
-### Writeup Template: You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
-
-
-## Kinematics Project: Kuka KR210 Pick & Place
-*Inverse kinematics for control of the KUKA KR210 serial manipulator.*
+***
 
 The KUKA KR210 is an industrial robotic arm (serial manipulator) which presents an excellent testbed to explore inverse kinematics, due to its obliging geometry. It has a spherical wrist supported by coplanar system links with    with 6 joints, also referred to as axes or degrees of freedom (DOF's). In this project, the objective was to implement
 
@@ -28,6 +9,8 @@ The KUKA KR210 is an industrial robotic arm (serial manipulator) which presents 
 
 [//]: # (Image References)
 
+[image1]: writeup_graphics/intercept_illustration_bkgrnd_crop.png
+[image2]: writeup_graphics/simultaneous_solution_multiplicity_edit.png
 [dh_param_definition]: writeup_graphics/denavit-hartenberg-parameter-definitions-01-modified.png
 [columns]: math/columns.png
 [generic_dh_tf_matrix]: math/generic_dh_tf_single_step.png
@@ -58,13 +41,18 @@ The KUKA KR210 is an industrial robotic arm (serial manipulator) which presents 
 [q5_result]: math/q5_result.png
 [solving_q6]: math/solving_q6.png
 
-# Kinematic Analysis of KUKA KR210
-## Joel Tiura
+
+
 ***
 ## Introduction / Abstract
+
+
 ## Forward Kinematics Functionality as Design Prerequisite
-### General DH Transform Matrices, Associated Utilities
+
+
 ## Forward Kinematics Tool
+
+
 ## Analysis of Robot Geometry and Analytical Model Definition
 ***
 ### Denavit-Hartenberg Parameterization
@@ -82,7 +70,271 @@ The KUKA KR210 is an industrial robotic arm (serial manipulator) which presents 
 *O(i-1): link i-1 origin, O(i): link i origin, alpha(i-1): *
 
 
-#### DH Parameter Table
+
+
+# KR210 Kinematic Analysis and IK Derivations
+## Decoupling and Solution Strategy
+
+While the position and orientation of the wrist center may be decoupled problems, they have a subtle interdependence. 
+I am a very spatial and visual thinker, and I often benefit profoundly from attempting to break down a problem into stages or steps with clear geometric analogs. I appreciate how powerful the matrix representations are for calculating these transformations efficiently, and I am happy to employ them as a computational shorthand, but when I'm learning a to solve a new kind of problem I have to map it out first. I have to find its symmetries, diagram it, and generally let my visual imagination explore the shape of the solution, manually, in detail.
+
+## Inverse Kinematics Steps
+1. Determine wrist center coordinates from target end effector position/orientation
+1. Calculate joint 1 angle (rotate arm's working plane to contain wc)
+1. Calculate cylindrical radius of wc from Z1
+1. 
+
+### Positioning Plane Symmetry
+
+## Wrist Position Constraint
+
+## Joint 1
+
+For the purposes of deriving the general form IK solution, this should be defined symbolically.
+
+The vector 'p_placeholder' is an x_0 unit vector, i.e. pointing parallel to the x-axis of the base link.
+
+This definition for p_placeholder was chosen to reflect the geometric constraints of the pick and place scene (specifically the accessibility of the shelves and the alignment of the target objects).
+
+The assertion that the end effector must be at this specific orientation may be more rigid than necessary to ensure smooth operation, but some specific orientation must be chosen to constrain the problem, and aligning the end effector with a surface normal vector on the shelf's openings should go a long way towards maximizing the accessible volume of any shelf (if not perfectly optimizing access, which I believe it will, in fact, do - but I haven't tried to prove this).
+
+Furthermore, with our end effector aligned along the depth dimension of the shelves, it is natural enough to specify a location on the opening's 'surface' at which to engage the automatic reaching and grasping routines.
+
+Since joints 0-5 are confined to the same vertical plane, and these are sufficient to solve the inverse positioning problem, I will call said plane the 'positioning plane.' With the wrist center determined, this plane's orientation about the Z1 axis is fully constrained. This orientation is determined by the value of theta_1, which is calculated below:
+
+
+
+
+
+## Joints 2 & 3
+### The SSS Triangle Method
+There is a slight hiccup here; a slight offset between the axes of joints 3 and 4. This of 
+Since the articulation of joint 4 is revolute about the axis between itself and joint 5 (a.k.a. the wrist center), and since both joint origins lie in plane with joint 3 AND joint 2, finding ain plane with the wrist center - **BUT ONLY APPROXIMATELY; SEE CORRECTION!** - the 
+The origins of joints 2, 3, and 5 all lie in the
+Let a, b, c represent sides of the triangle 
+
+
+![alt text][image2]
+
+
+
+### Explored Alternative Method: Simultaneous Circle Solver
+
+The SSS Triangle method is elegant, and performs well, generally, but it only finds one of the two possible solutions for most configurations.
+
+Another solution model which I investigated essentially amounts to solving for the the intersections of the sets of allowed locations for joint 3 given fixed locations for joint 2 and 5.
+
+![alt text][image1]
+
+Before enforcing the URDF model's joint range limits, joint 2 is free to move joint 3 to any location on a circle of radius 1.25m about its Z-axis, the length of link 2. This circle lies in the plane containing the origins of joints 0-5, the 'positioning plane.' This circle is the locus of all points 
+
+In an analogous (but inverted) manner, joint 5 is the center may be accessed by joint 3 from any point
+
+Joint 2 is taken to be the natural origin for solving this step in the problem.
+For the sake of cognitive simplicity, we will consider the next steps as purely 2-dimensional.
+In that frame of reference, Joint 5 is located at (s5, z5)
+
+
+### The Positioning Plane
+
+When I first began to analyze the inverse kinematics of the KR210 manipulator, I wanted to break down its geometry in 
+detail, so I could rebuild the problem from the base link up. And the base link seemed like the right place to start, 
+since the whole manipulator and all of the non-static reference frames pivot around it. The origin of the base_link 
+coordinate system lies on the axis of rotation for joint_1, naturally and unsurprisingly.
+
+
+While scrutinizing the coordinates of the link reference frames in RViz and comparing them with the joint origins in 
+the URDF file, I immediately noticed that (when joint variables are zeroed) the entire manipulator is essentially 
+embedded in a plane. This plane is coincident with the xz-plane in the zeroed pose, but its yaw relative to the base 
+link is determined by the angle of joint 1, represented by theta_1. Joint limits on joint 1 give it symmetrical CW/CCW 
+range of motion, capable of rotation left or right by 185 degrees from zero (aligned with the base x-axis). 
+This allows the robot to rotate through a maximum of 370 degrees in a single turn, giving a nice cushion of flexibility 
+to a fully circular work envelope.
+
+NOTE: By comparing the slider bounds of the joint_state_publisher to the urdf, I observe that they are accurate 
+representations of the urdf joint limits, as expected, although the slider values are in radians rather than degrees.
+
+The aforementioned plane is a nice symmetry of this problem, as it allows us to collapse the Since the DH Z-axes of joints 2 and 3 are orthogonal to said plane, their corresponding degrees of freedom are constrained to specify a subset of the points in this plane. Furthermore, since joint 4 is a coaxial revolute, it cannot move joint 5 out of the plane either - it can only indirectly alter the location of the end effector by rotating the direction at which joint 5 may leave this plane. so,  of them,  offer subsequent links any angle out of this plane. Since the 
+
+One result of this
+
+### Spatial and Operational Constraints on the Wrist Center
+
+NOTE: the value of d7 = 0.303 is the distance to the gripper origin, not the grasping center of the end effector!
+The 0.303 value is given in the problem description and intro, but seems to me a less natural choice than 0.453,
+which is the actual distance between the target point and the wrist center.
+
+
+B. Constrain Angle of Approach
+
+For any viable pose request, there is a specific point target which serves as a boundary condition for an IK solution. 
+By itself, however, that position vector wouldn't be a very rigid constraint; the IK process would need to somehow 
+select a valid orientation of approach. Since a pose also provides an orientation quaternion, it solves this problem for
+us. 
+
+This orientation directly determines the location of the wrist center; the distance between the wrist center and the 
+end effector is a constant 0.303m, thus, there is a unique wrist center displaced along the orientation vector by 
+precisely this distance.
+
+Recall the earlier observation that every joint from the base link up to and including the wrist center are coplanar. 
+If we project the wrist center's position vector onto the xy-plane representing the ground, theta1 is the angle between
+the world-frame x unit vector and this projection.
+
+*![][picture goes here]*
+
+
+ 
+Once the uniquely-determined wrist center is extracted from the pose request, we can establish theta1: the orientation 
+of the positioning plane. 
+(I have chosen to refer to this as the 'positioning plane') lie in the same plane;
+
+the of the pick and place scene (specifically the accessibility of the shelves and the alignment of the target objects).
+
+The assertion that the end effector must be at this specific orientation may be more rigid than necessary to ensure smooth operation, but some specific orientation must be chosen to constrain the problem, and aligning the end effector with a surface normal vector on the shelf's openings should go a long way towards maximizing the accessible volume of any shelf (if not perfectly optimizing access, which I believe it will, in fact, do - but I haven't tried to prove this).
+
+Furthermore, with our end effector aligned along the depth dimension of the shelves, it is natural enough to specify a location on the opening's 'surface' at which to engage the automatic reaching and grasping routines.
+
+
+Rotation of the Positioning Plane: Theta_1
+Since joints 0-5 are confined to the same vertical plane, and these are sufficient to solve the inverse positioning problem, I will call said plane the 'positioning plane.' With the wrist center determined, this plane's orientation about the Z1 axis is fully constrained. This orientation is determined by the value of theta_1, which is calculated below:
+
+
+Regardless of our choice of method, we will need the following values to be loaded:
+
+```python
+# radius_j2_j3 = dh_parameter[a2]
+
+# The magnitude of the vector pointing from joint_3 to joint_5, although our DH parameter table
+# files this location under the transformation to joint_4 coordinates, since joints 4 and up 
+# share an origin at the wrist center, coincident with joint 5.
+
+# radius_j5_j3 = sqrt(dh_parameter[a3]**2 + dh_parameter[d4]**2)
+# displacements in the positioning plane between the wrist center and joint_2.
+# delta_s = wrist_s - dh_parameter[a1] # dh_parameter[a1] = 0.35 (meters)
+# delta_z = wrist_z - dh_parameter[d1] # dh_parameter[d1] = 0.75 (meters)
+
+# radius_j5_j3, delta_s, delta_z
+```
+
+
+
+## Joints 4, 5, and 6: Extracting Angle Formulae
+
+
+
+The differences between the coordinates of joint_2 and joint_5 are important parameters for solving the SSS triangle, ABC, described above. These differences are also the x and y coordinates of the wrist center in the joint 2 reference frame. The values are denoted here as delta_s and delta_z.
+
+With the arm rotated into the positioning plane, the cylindrical radius to joint_2 is a constant 0.35m along s.
+Similarly, joint_2 is always a constant 0.75m above the base link's z=0 plane, regardless of any other parameters.
+
+Together, this means that joint_2 traverses a circle of radius 0.35m, fixed at 0.75m off the ground plane.
+Setting theta_1 and thus the orientation of s effectively selects a point for j2 on this circle, and that is the origin for the coordinates of the SSS Triangle method.
+
+
+
+the x-axis of the joint_1 reference frame, called here 's.' The s-axis is determined by the wrist center: it is parallel to the projection of a vector from the base_link origin to the wrist center. Referring to this dimension or its values as 's' may be unnecessary complication, but it emphasizes the profound cylindrical symmetry of manipulator configurations.
+
+Determining theta_1 doesn't simply move us closer to solving for all the joint angles; it permits us to rotate the coordinate system the appropriate amount to locate it into the sz-plane required by the wrist center.
+
+
+Joint Range Enforcement
+Before going forward, we should vet any and all solutions to ensure that they are viable commands for the robot. trying to choose between two solutions, or for that matter, accepting the miraculous appearance of a unique solution, First, we must resolve the value of theta_3. This must be calculated from gamma_5 and geometric methods.
+
+Discriminating Between Multiple Viable Solutions
+From a control and integrity standpoint, it makes sense to keep the robot's center of mass as near to the Z1 axis as possible, which could be calculated more delicately using the inertial information in the URDF file. This would be a bit of an undertaking, to say the least.
+
+Another general consideration is similarity to the current pose. This is much easier to assess.
+
+Joints 4-6: The Orientation Problem
+The process of conforming the wrist links onto the now-constrained arm links breaks down into a few separate elements.
+
+- Account for the slight misalignment between j3-j5 axis and rotation axis of joint_4
+- Find theta_4 such that joint_5's DoF can access the target point.
+- Find theta_6 such that the end effector is correctly oriented relative to the target.
+We do, however, have some parts of this process partially complete! The angles of joints 4 and 5 are ,
+
+
+Initially we have all side lengths, so let's prepare a dict:
+
+```python
+# Let A, B, C name the vertices of the triangle described by the origins of joints 2, 3, and 4.
+# let the symbols A and B represent the interior angles of triangle ABC at their synonymous vertices.
+# A, B, C = symbols('A B C')
+# C is not strictly needed, but it may be useful for appraising whether a given pose is possible.
+# If C comes back imaginary, this would indicate an unviable solution.
+
+# Note that vertex angle C is not given a symbol; it simply isn't necessary, as it wouldn't be used in any later step.
+# A, B = symbols('A B')
+
+# let a, b, c represent side lengths of ABC, named conventionally (opposite their angles)
+# a, b, c = symbols('a b c')
+
+# Here, A is the vertex located at joint_2, B at joint_3, and C at joint_5 (shared origin with joints 4-6)
+# ...but only one leg has a known location/orientation: side b, which is coincident with a vector pointing from j2 to j5.
+# This vector ( we'll just call it "b_vector") ultimately determines the existence and nature of any solutions.
+# The side length b is the magnitude of b_vector:
+
+sides = {}
+b = sqrt(delta_s**2 + delta_z**2)
+
+# sides[b] = sqrt(delta_s**2 + delta_z**2).evalf(subs=t)
+sides[b] = sqrt(delta_s**2 + delta_z**2)
+
+# a and c are fixed distances, a the distance between joints 3 and 5 (=1.25m) and b between 2 and 3.
+# These are both defined above, as radius_j5_j3 and radius_j2_j3 respectively
+sides[a] = radius_j5_j3
+sides[c] = dh_parameter[a2]
+
+sides
+
+
+# Solving SSS Triangles is fun and simple!
+A = acos((b**2 + c**2 - a**2)/(2 * b * c)).subs(sides)
+B = acos((a**2 + c**2 - b**2)/(2 * a * c)).subs(sides)
+C = acos((a**2 + b**2 - c**2)/(2 * a * b)).subs(sides)
+A, B
+
+A = A.evalf(subs=t)
+B = B.evalf(subs=t)
+C = C.evalf(subs=t)
+```
+
+Calculate numerical error between expected sum of interior angles and the sum of our results.
+num_error = N(pi - (A + B + C))
+
+If A, B, or C are imaginary or complex, there is no physical solution.
+If num_error is not approximately zero, then there is likely an error upstream. 
+A, B, C, num_error
+
+
+The rotation of b_vector about Z2 (common normal of s and Z1) sets the orientation of the triangle ABC, 
+which in turn determines various angular terms in the formulas for theta_2 and theta_3.
+One such term is wc_pitch, the angle between b_vector and the s-axis:
+wc_pitch = atan2(delta_z, delta_s)
+wc_pitch, wc_pitch.evalf(subs=t)
+
+
+Since angles A, B, C are positive definite, and wc_pitch is measured CCW from the horizontal (opposite sign to theta_2),
+the angle (B + wc_pitch) is effectively wc_pitch, with some as-yet-undetermined positive phase shift.
+
+Theta_2 is initially offset by a phase of 90 degrees in the positive gamma direction
+
+gamma_5 is an intermediate angle in this calculation.
+For now, it represents the deflection of the joint 5 radiant from the horizontal,
+as shown in illustration. 
+Behaves identically to theta_2 for ease of explanation. 
+This is hard to visualize, add illustration!
+
+
+
+
+
+### DH Parameter Assignment
+#### Follow the Algorithm!
+
+
+
+### DH Parameter Table
 
 Links | alpha(i-1) | a(i-1) | d(i-1) | theta(i)
 --- | --- | --- | --- | ---
@@ -95,7 +347,10 @@ Links | alpha(i-1) | a(i-1) | d(i-1) | theta(i)
 6->EE | 0 |      0 |  0.303 | 0
 
 
-#### Generate DH FK Transform Matrices from Table
+### Generate DH FK Transform Matrices from Table
+
+### General DH Transform Matrices, Associated Utilities
+
 ```python
 import sympy as sp
 from sympy import pi, cos, sin, sqrt, atan2, acos, simplify 
@@ -209,6 +464,7 @@ generic_dh_tf_matrix = single_dh_transform_step(a, q, d, alpha)
 
 ![][generic_dh_tf_matrix]
 
+### Create Individual DH Transform Matrices
 
 ```python
 # Create symbols for DH parameters
@@ -245,6 +501,7 @@ T4_5 = single_dh_transform_step(alpha4, a4, d5, q5).subs(dh_parameters)
 T5_6 = single_dh_transform_step(alpha5, a5, d6, q6).subs(dh_parameters)
 T6_7 = single_dh_transform_step(alpha6, a6, d7, q7).subs(dh_parameters)
 ```
+
 **T0_1:**
 
 ![T0_1][dh_transform_0_1]
@@ -273,7 +530,7 @@ T6_7 = single_dh_transform_step(alpha6, a6, d7, q7).subs(dh_parameters)
 
 ![T6_7][dh_transform_6_7]
 
-
+#### Complete DH Transform
 
 ```python
 T0_EE = sp.simplify(T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_7)
@@ -311,6 +568,33 @@ R_corr = R_corr_sym.subs({y: dtr * 180, p: dtr * -90})
 
 ![][r_corr_elegant]
 
+
+```python
+R_corr = Matrix([[ 0,  0,  1],
+                 [ 0, -1,  0],
+                 [ 1,  0,  0]])
+```
+
+Where it has been demonstrated that given:
+
+```python
+x = Matrix([[1], [0], [0]]) # == column((1, 0, 0));
+y = Matrix([[0], [1], [0]]) # == column((0, 1, 0));
+z = Matrix([[0], [0], [1]]) # == column((0, 0, 1));
+```
+
+The following desired equalities hold:
+
+```python
+R_corr * x == Matrix([[0], [ 0], [1]]) ==  z
+R_corr * y == Matrix([[0], [-1], [0]]) == -y
+R_corr * y == Matrix([[1], [ 0], [0]]) ==  x
+```
+
+So it is certainly the correct transform.
+
+
+***
 
 
 ```python
@@ -495,14 +779,33 @@ theta6 = atan2(-R3_6[1, 1], R3_6[1, 0])
 
 ## Module Implementation: IK_server.py
 ### Design Overview
-In my preparatory analysis and early experiments developing a set of inverse kinematics equations, I noticed that most of the problem was completely general and invariant over all poses, and only needed to be derived once in a theoretical context. That context was using SymPy in Jupyter notebooks, where I could leverage the power of the notebooks' cell-based execution to streamline exploratory work. 
+In my preparatory analysis and early experiments developing a set of inverse kinematics equations, I noticed that most 
+of the problem was completely general and invariant over all poses, and only needed to be derived once in a theoretical 
+context. That context was using SymPy in Jupyter notebooks, where I could leverage the power of the notebooks' 
+cell-based execution to streamline exploratory work. 
 
-SymPy was a delight to use, and helped me make some clever optimizations. By using its robust computer algebra system to compute exact symbolic relations, I was able to derive a coordinate system correction matrix which was not to make performance improvements in code that di, and using
+SymPy was a delight to use, and helped me make some clever optimizations. By using its robust computer algebra system 
+to compute exact symbolic relations, I was able to derive a coordinate system correction matrix which was not to make 
+performance improvements in code that di, and using
 
-As I started implementing a solution, I found that I didn't like the suggested organization of the handle_calculate_IK function. It struck me as inelegant to be programmatically constructing and manipulating invariant constructs solution inside the working server code. and as such, I sought to  as many features underlying problem structure as possible. much of the process of deriving the components of a working solution was  to distill the inverse kinematics problem down to its essence, and do my best to refine the IK_server loop into a representation of a solution to that problem.
+As I started implementing a solution, I found that I didn't like the suggested organization of the handle_calculate_IK 
+function. It struck me as inelegant to be programmatically constructing and manipulating invariant constructs solution 
+inside the working server code. and as such, I sought to  as many features underlying problem structure as possible. 
+much of the process of deriving the components of a working solution was  to distill the inverse kinematics problem 
+down to its essence, and do my best to refine the IK_server loop into a representation of a solution to that problem.
 weed out redundant calculations, the minimum number of 'moving parts'
 
 ### Function: handle_calculate_IK
+
+while the wrist center's location is not specified explicitly, it is already determined
+*implicitly* by the specified end effector orientation.
+     
+
+
+### Function: construct_R_EE
+`r_EE` is the general symbolic rotation matrix for the end effector orientation, defined outside loop.
+r_EE represents this matrix for a given pose, substituting in the roll, pitch, and yaw variables
+extracted from the pose orientation quaternion.
 r_EE is the rotational component of the transformation matrix between the base coord
 roll, pitch, and yaw specify end-effector orientation relative to the base coordinate system,
 but only when the corresponding sequence of rotations is applied with respect to static coordinates, and
@@ -511,7 +814,7 @@ in an XYZ axis order.
 This sequence and convention is not a coincidence; it's the is the default behavior of the
 tf.transformations.euler_from_quaternion() function.
 
-```
+```python
 (roll, pitch, yaw) = tf.transformations.euler_from_quaternion([
     req.poses[x].orientation.x,
     req.poses[x].orientation.y,
@@ -519,22 +822,11 @@ tf.transformations.euler_from_quaternion() function.
     req.poses[x].orientation.w
     ])
 ```
+
 These values of roll, pitch, and yaw are calculated using the 'sxyz' convention defined in the tf library,
 where *'s'* denotes static frame, and *'xyz'* gives an axis sequence for the rotations.
 
-while the wrist center's location is not specified explicitly, it is already determined
-*implicitly* by the specified end effector orientation.
-     
-
-`r_EE` is the general symbolic rotation matrix for the end effector orientation, defined outside loop.
-r_EE represents this matrix for a given pose, substituting in the roll, pitch, and yaw variables
-extracted from the pose orientation quaternion.
-
-
-### Function: construct_R_EE
-#### Derivation
-#### Implementation
-```
+```python
 def construct_R_EE(rpy_orientation_tuple):
     '''
     construct_R_EE(orientation: Tuple[float, float, float]) -> np.ndarray:
@@ -579,31 +871,16 @@ to small but avoidable error, I opted to solve it symbolically and just multiply
 transform which is then represented as exact symbolic formulae, cleanly expressed in static code, using numpy
 trig functions in place of their sympy equivalents.
 
-Includes coordinate correction implicitly by having multiplied in the following matrix during the derivation of the complete transform:
-```
-R_corr = Matrix([[ 0,  0,  1],
-                 [ 0, -1,  0],
-                 [ 1,  0,  0]])
-```
-Where it has been demonstrated that given:
-```
-x = Matrix([[1], [0], [0]]) # == column((1, 0, 0));
-y = Matrix([[0], [1], [0]]) # == column((0, 1, 0));
-z = Matrix([[0], [0], [1]]) # == column((0, 0, 1));
-```
-The following desired equalities hold:
-```
-R_corr * x == Matrix([[0], [ 0], [1]]) ==  z
-R_corr * y == Matrix([[0], [-1], [0]]) == -y
-R_corr * y == Matrix([[1], [ 0], [0]]) ==  x
-```
-So it is certainly the correct transform.
+Includes coordinate correction implicitly by having multiplied in the following matrix during the derivation of the 
+complete transform:
+
 
 
 ### Function: compute_EE_position_error
 #### Derivation
 #### Implementation
-```
+
+```python
 def compute_EE_position_error(theta_list, pose):
     '''
     evaluate_EE_error(theta_list: List[float], pose: Pose) -> Tuple[float, float, float, float]:
@@ -651,7 +928,7 @@ represented in this function, but was tested and shown to be a valid model of th
 
 
 #### Implementation
-```
+```python
 def construct_R0_3_inverse(q1, q2, q3):
     '''
     construct_R0_3_inverse(q1: float, q2: float, q3: float) -> np.ndarray:
@@ -695,15 +972,9 @@ and return an array of transform matrices calculated with even more efficiency.
 - include functionality to pickle these so that they can be loaded faster and into other code.
 - enhances reproducibility and transparency of algorithm.
 
-**=============================================================================================**
 
-**CRITERIA: Fill in the IK_server.py file with properly commented python code for calculating Inverse Kinematics based on previously performed Kinematic Analysis. Your code must guide the robot to successfully complete 8/10 pick and place cycles. A screenshot of the completed pick and place process is included.**
-
-**MEETS SPECIFICATIONS: IK_server.py must contain properly commented code. The robot must track the planned trajectory and successfully complete pick and place operation. Your writeup must include explanation for the code and a discussion on the results, and a screenshot of the completed pick and place process.**
-
-**=============================================================================================**
-### IK_debug.py
-#### Direct `import handle_ik_request` from IK_server.py
+## IK_debug.py
+### Direct `import handle_ik_request` from IK_server.py
 Avoids repetitive and error-prone process of manually copy-pasting into IK_debug.py
 For simplicity/operability, moved IK_debug.py to scripts folder
 This required only minimal modifications to IK_server, now tested and stable.
@@ -723,9 +994,3 @@ Added more detail, visual cuing, etc.
 
 #### Modified script to run all test cases in a batch rather than manually specifying
 would be nice to have the option to specify a test case, but it was more useful to me to get the whole rundown every time than to bother implementing that feature...
-
-## Inverse Kinematics Steps
-    1. Determine wrist center coordinates from target end effector position/orientation
-    1. Calculate joint 1 angle (rotate arm's working plane to contain wc)
-    1. Calculate cylindrical radius of wc from Z1
-    1. 
