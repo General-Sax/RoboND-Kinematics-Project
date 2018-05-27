@@ -99,9 +99,6 @@ def single_dh_transform_step(alpha, a, d, q):
     return simplify(sub_transform_x * sub_transform_z)
 
 
-
-
-
 def harvest_dh_transform_matrix(dh_transform_matrix):
     rotation_sub_matrix = dh_transform_matrix[0:3, 0:3]
     translation_sub_matrix = dh_transform_matrix[0:3, 3]
