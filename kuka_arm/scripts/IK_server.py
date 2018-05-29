@@ -19,7 +19,7 @@ from tf.transformations import euler_from_quaternion
 from kuka_arm.srv import *
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
-from error_handler import PerformanceMonitor
+from error_handler import ErrorHandler
 
 # There's a lot of dense trig expressions ahead so I'll also directly import these for readability
 # SymPy versions of sqrt, sin and cos are *NOT* used in the live code anywhere, so there isn't any namespace ambiguity
@@ -131,8 +131,8 @@ def handle_calculate_IK(req):
     n_poses = len(req.poses)
     rospy.loginfo("Received %s eef-poses from the plan" % n_poses)
     
-    if 'perf_monitor' in globals():
-        error_handler = perf_monitor
+    if 'error_handler' in globals():
+        global error_handler
     else:
         error_handler = None
 
@@ -236,6 +236,9 @@ def handle_calculate_IK(req):
 
         # This section contains some elementary error logging/monitoring
         if error_handler is not None:
+            if SHOW_FIGS:
+                rospy.logwarn('Figure display is blocking execution! Close figure window to resume IK_server functionality.')
+
             means, maxes = error_handler.digest_request_results()
             x_err_mean, y_err_mean, z_err_mean, abs_err_mean = means
             x_err_max, y_err_max, z_err_max, abs_err_max = maxes
@@ -272,5 +275,8 @@ def IK_server():
     rospy.spin()
 
 if __name__ == "__main__":
-    perf_monitor = PerformanceMonitor(show_figures=True, save_figures=False)
+    SAVE_FIGS = False
+    SHOW_FIGS = False
+    error_handler = ErrorHandler(show_figures=SHOW_FIGS, save_figures=SAVE_FIGS)
     IK_server()
+
