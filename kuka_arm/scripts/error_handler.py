@@ -83,6 +83,7 @@ class PerformanceMonitor:
 		self.y_error_list.append(y_err)
 		self.z_error_list.append(z_err)
 		self.abs_error_list.append(abs_err)
+		
 	
 	def digest_request_results(self):
 		assert len(self.x_error_list) == len(self.y_error_list) == len(self.z_error_list) == len(self.abs_error_list)
@@ -133,6 +134,8 @@ class PerformanceMonitor:
 			                                 save_location=save_loc)
 			
 			self.plot_file_names.append(write_name)
+		
+		return means, maxes
 	
 	def plot_req_error(self, req_number, show_fig=True, save_location=None):
 		''''''
