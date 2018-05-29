@@ -59,7 +59,7 @@ class ErrorHandler:
 		self.z_error_list = []
 		self.abs_error_list = []
 		
-		self.plot_file_names = []
+		self.img_file_names = []
 	
 	def record_EE_position_error(self, theta_list, pose):
 		'''
@@ -149,7 +149,7 @@ class ErrorHandler:
 			                                 show_fig=self.show_figures,
 			                                 save_location=self.save_location)
 			
-			self.plot_file_names.append(write_name)
+			self.img_file_names.append(write_name)
 		
 		return means, maxes
 	
