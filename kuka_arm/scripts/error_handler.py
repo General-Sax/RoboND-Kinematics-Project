@@ -63,9 +63,9 @@ class ErrorHandler:
 	
 	def record_EE_position_error(self, theta_list, pose):
 		'''
-		evaluate_EE_error(theta_list: List[float], pose: Pose) -> Tuple[float, float, float, float]:
+		record_EE_position_error(theta_list: List[float], pose: Pose) -> Tuple[float, float, float, float]:
 
-		x_error, y_error, z_error, absolute_error = evaluate_EE_error([theta1, theta2, theta3, theta4, theta5, theta6])
+		x_error, y_error, z_error, absolute_error = record_EE_position_error([theta1, theta2, theta3, theta4, theta5, theta6])
 
 		:param theta_list: calculated values for joints 1:6 in ascending order
 		:param pose: pose object contained in req.poses for which the given theta list was calculated
