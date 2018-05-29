@@ -12,7 +12,7 @@ cos = np.cos
 sqrt = np.sqrt
 
 
-class PerformanceMonitor:
+class ErrorHandler:
 	figure_dims = (12, 10)
 	default_save_location = "outputs"
 	
@@ -158,7 +158,7 @@ class PerformanceMonitor:
 		y_max = 1.05 * max(max(x_err), max(y_err), max(z_err), max(abs_err))
 		y_min = 1.05 * min(min(x_err), min(y_err), min(z_err), min(abs_err))
 		
-		output_fig = plt.figure(figsize=PerformanceMonitor.figure_dims)
+		output_fig = plt.figure(figsize=ErrorHandler.figure_dims)
 		
 		plt.subplot(211)
 		plt.plot(inds, zero, color='k', aa=True, lw=2, alpha=0.6)
@@ -214,4 +214,4 @@ class PerformanceMonitor:
 #
 # if __name__ == "__main__":
 # 	IK_server()
-# # monitor = PerformanceMonitor(show_figures=True, save_figures=False)
+# # monitor = ErrorHandler(show_figures=True, save_figures=False)
