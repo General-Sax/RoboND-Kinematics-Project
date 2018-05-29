@@ -158,12 +158,10 @@ def handle_calculate_IK(req):
                 pose.orientation.w,
             ]))
             # Calculate wrist center location
-            EE_vector = 0.303 * r_EE[:, 2] # 0.303 is the length of the
-
+            EE_vector = 0.303 * r_EE[:, 2] # 0.303 is the displacement between the wrist center and the end effector
             wrist_x = px - EE_vector[0]
             wrist_y = py - EE_vector[1]
             wrist_z = pz - EE_vector[2]
-
             theta1 = atan2(wrist_y, wrist_x)
             #######################################################################################################
             # Determine theta2 and theta3 with SSS triangle formulae
@@ -179,19 +177,19 @@ def handle_calculate_IK(req):
             # Triangle Solver
             # A, B, a, b, c = sp.symbols('A B a b c') # A, B are needed interior angles; a, b, c are side lengths
             # side lengths:
-            #     a: 1.500971685275908, the distance betweenj2_wrist_dist defined outside loop = 1.500971685275908
+            #     a: 1.500971685275908, # distance between joint 3 and the wrist center
             #     b: j2_wrist_dist,
             #     c: 1.25
             #     }
             # j2_wrist_dist (the line segment between the midpoint/origin of joint_2 and wrist center) is the only
             # side of said triangle not actually measured along links of the manipulator.
-            j2_wrist_dist = sqrt(delta_s ** 2 + delta_z ** 2)  # distance from joint_2 to wrist center; side b length.
+            j2_wrist_dist = sqrt(delta_s ** 2 + delta_z ** 2)  # distance from joint_2 to wrist center; == len(side b)
 
             # Triangle with
             A = acos((j2_wrist_dist ** 2 + 1.25 ** 2 - 1.501 ** 2) / (2 * j2_wrist_dist * 1.25))
             B = acos((1.501 ** 2 + 1.25 ** 2 - j2_wrist_dist ** 2) / (2 * 1.501 * 1.25))
             theta2 = (np.pi / 2 - j2_pitch - A)
-            theta3 = np.pi / 2 - (B + 0.036)  # j4_correction = 0.036
+            theta3 = np.pi / 2 - (B + 0.036)  # 0.036 is the small angular correction to joint 4
             #######################################################################################################
             # Determine theta4-theta6 with matrix algebra and clever trig substitutions
             #######################################################################################################
