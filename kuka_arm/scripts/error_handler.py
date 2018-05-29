@@ -202,8 +202,6 @@ class ErrorHandler:
 		write_name = None
 		
 		if save_location is not None:
-			assert isinstance(save_location, str)
-			assert os.path.isdir(save_location)
 			write_name = "pos_error_plot_req_{}_{}.{}".format(req_number, time.strftime('[%T]').replace(':', '_'), extension)
 			file_path = os.path.join(save_location, write_name)
 			
