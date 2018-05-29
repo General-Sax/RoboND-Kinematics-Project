@@ -1,10 +1,51 @@
 UDACITY GITHUB: https://github.com/udacity/RoboND-Kinematics-Project
 
-MY GITHUB: 
+MY GITHUB: https://github.com/general-sax/RoboND-Kinematics-Project
 
 RUBRIC: https://review.udacity.com/#!/rubrics/972/view
 
 WALKTHROUGH: https://www.youtube.com/watch?v=Gt8DRm-REt4
+
+
+## IK_debug.py
+- direct import from IK_server.py
+    Avoids repetitive and error-prone process of manually copy-pasting into IK_debug.py
+    For simplicity/operability, moved IK_debug.py to scripts folder
+    required corresponding modifications to IK_server, now tested and stable.
+- added test case zero, corresponding to the neutral/zero configuration of the arm, as specified by the DH parameters.
+- improved output text formatting
+    Added run start date/time for easier
+    Added more detail, visual cuing, etc.
+
+- added forward kinematics for joint value verification (as recommended)
+
+
+
+## IK_server.py
+### Contributions
+- position error performance logging
+- automatic plot generation; include plots, maybe try to get working again?
+- ubiquitous instances of literalization/hard-coding for steps that did not require repetition in the main loop:
+    - instances here...
+    -
+
+- ubiquitous introduction of numpy for speed
+    Motivating rationale
+    - instances here...
+    -
+
+Analyses performed; notebooks/scripts to perform them; illustrations
+
+attempts to modify safe spawner script?
+- did that really get me anything?
+- at least mention difficulties with simulator/os performance, stability, etc.
+
+
+## What to include in your submission
+You may submit your project as a zip file or with a link to a GitHub repo. The submission must include these items:
+    - IK_server.py file with your code (make sure to add comments at appropriate places in your code)
+    - Writeup report (md or pdf file)
+    
 
 ### Outside Links
 https://www.youtube.com/watch?v=10mUtjfGmzw
