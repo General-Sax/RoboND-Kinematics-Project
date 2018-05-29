@@ -14,9 +14,30 @@ sqrt = np.sqrt
 
 class ErrorHandler:
 	figure_dims = (12, 10)
-	default_save_location = "outputs"
+	default_module_location = "/home/robond/catkin_ws/src/RoboND-Kinematics-Project/kuka_arm/scripts"
+	default_save_location = default_module_location + "/outputs"
 	
-	def __init__(self, show_figures=False, save_figures=True):
+	def __init__(self, show_figures=False, save_figures=False, new_output_directory=True):
+		if not save_figures:
+			self.save_location = None	
+
+		elif new_output_directory:
+			session_dir = ErrorHandler.default_module_location + "/outputs_" + time.strftime('[%T]').replace(':', '_')
+			os.mkdir(session_dir)
+			self.save_location = session_dir
+
+		elif os.path.isdir(ErrorHandler.default_save_location):
+			self.save_location = ErrorHandler.default_save_location
+
+		elif os.path.isdir(ErrorHandler.default_module_location):
+			self.sace_location = ErrorHandler.default_module_location
+
+		else:
+			raise RuntimeError("No appropriate save directory could be located!")
+				
+		assert ((save_figures and os.path.isdir(self.save_location)) or
+			(not save_figures and (self.save_location is None or os.path.isdir(self.save_location))))
+
 		self.session_start_time = time.time()
 		
 		self.show_figures = show_figures
@@ -124,14 +145,9 @@ class ErrorHandler:
 		self.theta_results_archive.append([])
 		
 		if self.show_figures or self.save_figures:
-			if self.save_figures:
-				save_loc = PerformanceMonitor.default_save_location
-			else:
-				save_loc = None
-			
 			write_name = self.plot_req_error(self.n_requests_processed,
 			                                 show_fig=self.show_figures,
-			                                 save_location=save_loc)
+			                                 save_location=self.save_location)
 			
 			self.plot_file_names.append(write_name)
 		
