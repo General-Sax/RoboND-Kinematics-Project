@@ -233,8 +233,8 @@ def handle_calculate_IK(req):
         abs_err_max = max(err_dict['abs'])
         abs_err_mean = np.mean(err_dict['abs'])
 
-        rospy.loginfo('Error Maxima\n x: {}\n y: {}\n z: {}\n abs: {}\n'.format(x_err_max, y_err_max, z_err_max, abs_err_max))
-        rospy.loginfo('Error Means\n x: {}\n y: {}\n z: {}\n abs: {}\n'.format(x_err_mean, y_err_mean, z_err_mean, abs_err_mean))
+        rospy.loginfo('maximum request error:\n x: {}\n y: {}\n z: {}\n abs: {}\n'.format(x_err_max, y_err_max, z_err_max, abs_err_max))
+        rospy.loginfo('mean request error:\n x: {}\n y: {}\n z: {}\n abs: {}\n'.format(x_err_mean, y_err_mean, z_err_mean, abs_err_mean))
         rospy.loginfo("Final length of Joint Trajectory List: %s" % len(joint_trajectory_list))
         rospy.loginfo("Full compute time (with overhead): %s" % (time.time() - t_start))
         rospy.loginfo("Mean compute time per pose: {}\n".format((time.time() - t_start) / len(joint_trajectory_list)))
