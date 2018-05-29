@@ -11,10 +11,12 @@
 
 # Student contributor: Joel Tiura
 
+import os
 import time
 
 import rospy
 import numpy as np
+import matplotlib.pyplot as plt
 
 from tf.transformations import euler_from_quaternion
 from kuka_arm.srv import *
