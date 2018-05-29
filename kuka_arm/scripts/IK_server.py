@@ -28,7 +28,6 @@ acos = np.arccos
 atan2 = np.arctan2
 
 
-
 def construct_R_EE(rpy_orientation_tuple):
     '''
     construct_R_EE(orientation: Tuple[float, float, float]) -> np.ndarray:
@@ -58,8 +57,6 @@ def construct_R_EE(rpy_orientation_tuple):
         [                     cos_p*cos_r,                    -sin_r * cos_p,       -sin_p]], dtype=np.float64)
 
     return R_EE
-
-
 
 
 def compute_EE_position_error(theta_list, pose):
@@ -121,8 +118,6 @@ def construct_R0_3_inverse(q1, q2, q3):
     return R0_3_inverse
 
 
-
-
 def handle_calculate_IK(req):
     '''
     handle_calculate_IK(req: Pose) -> CalculateIKResponse(joint_trajectory_list) | joint_trajectory_list:
@@ -142,7 +137,6 @@ def handle_calculate_IK(req):
         joint_trajectory_list = []
         # Initialize end effector position error list if logging is logging/plotting active
         err_dict = {'x': [], 'y': [], 'z': [], 'abs': []}
-
         # Loop through poses in requested sequence, and do IK calculation to determine the joint values for each:
         for x, pose in enumerate(req.poses):
             # Initialize service response entry for pose
@@ -176,15 +170,12 @@ def handle_calculate_IK(req):
             #######################################################################################################
             # radial displacement of the wrist center from the base_link origin, projected onto the xy-plane.
             wrist_s = sqrt(wrist_x ** 2 + wrist_y ** 2)
-
             # When the arm's working plane is aligned such that it contains the wrist center - a precondition for any
             # valid solution - the joint_2 axis/origin is set forward 0.35m along the
             delta_s = wrist_s - 0.35
             delta_z = wrist_z - 0.75
-
             # j2_pitch is the angle between the xy-plane and a line through both the world origin and the wrist center
             j2_pitch = atan2(delta_z, delta_s)
-
             # Triangle Solver
             # A, B, a, b, c = sp.symbols('A B a b c') # A, B are needed interior angles; a, b, c are side lengths
             # side lengths:
@@ -199,10 +190,8 @@ def handle_calculate_IK(req):
             # Triangle with
             A = acos((j2_wrist_dist ** 2 + 1.25 ** 2 - 1.501 ** 2) / (2 * j2_wrist_dist * 1.25))
             B = acos((1.501 ** 2 + 1.25 ** 2 - j2_wrist_dist ** 2) / (2 * 1.501 * 1.25))
-
             theta2 = (np.pi / 2 - j2_pitch - A)
             theta3 = np.pi / 2 - (B + 0.036)  # j4_correction = 0.036
-
             #######################################################################################################
             # Determine theta4-theta6 with matrix algebra and clever trig substitutions
             #######################################################################################################
@@ -239,13 +228,10 @@ def handle_calculate_IK(req):
         # This section contains some elementary error logging/monitoring
         x_err_max = max(err_dict['x'])
         x_err_mean = np.mean(err_dict['x'])
-
         y_err_max = max(err_dict['y'])
         y_err_mean = np.mean(err_dict['y'])
-
         z_err_max = max(err_dict['z'])
         z_err_mean = np.mean(err_dict['z'])
-
         abs_err_max = max(err_dict['abs'])
         abs_err_mean = np.mean(err_dict['abs'])
 
