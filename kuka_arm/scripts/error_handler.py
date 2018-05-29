@@ -152,7 +152,7 @@ class ErrorHandler:
 		
 		return means, maxes
 	
-	def plot_req_error(self, req_number, show_fig=True, save_location=None):
+	def plot_req_error(self, req_number, show_fig=True, save_location=None, extension="png"):
 		''''''
 		assert isinstance(show_fig, bool)
 		assert isinstance(req_number, int)
@@ -204,7 +204,7 @@ class ErrorHandler:
 		if save_location is not None:
 			assert isinstance(save_location, str)
 			assert os.path.isdir(save_location)
-			write_name = "pos_error_plot_req_{}_{}.png".format(req_number, time.strftime('[%T]').replace(':', '_'))
+			write_name = "pos_error_plot_req_{}_{}.{}".format(req_number, time.strftime('[%T]').replace(':', '_'), extension)
 			file_path = os.path.join(save_location, write_name)
 			
 			plt.savefig(file_path)
