@@ -206,11 +206,11 @@ class ErrorHandler:
 			file_path = os.path.join(save_location, write_name)
 			
 			plt.savefig(file_path)
-			plt.close(output_fig)
 		
 		if show_fig:
 			plt.show()
 
+		plt.close(output_fig)
 
 		return write_name
 
