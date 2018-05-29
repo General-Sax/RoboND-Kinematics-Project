@@ -112,7 +112,6 @@ class ErrorHandler:
 		self.n_requests_processed += 1
 		self.total_poses_processed += len(self.x_error_list)
 		
-		# This section contains some elementary error
 		x_err_max = max(self.x_error_list)
 		x_err_mean = np.mean(self.x_error_list)
 		
@@ -205,7 +204,6 @@ class ErrorHandler:
 		if save_location is not None:
 			assert isinstance(save_location, str)
 			assert os.path.isdir(save_location)
-			
 			write_name = "pos_error_plot_req_{}_{}.png".format(req_number, time.strftime('[%T]').replace(':', '_'))
 			file_path = os.path.join(save_location, write_name)
 			
@@ -214,7 +212,8 @@ class ErrorHandler:
 		
 		if show_fig:
 			plt.show()
-		
+
+
 		return write_name
 
 #
