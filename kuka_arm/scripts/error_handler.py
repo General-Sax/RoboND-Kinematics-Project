@@ -12,11 +12,32 @@ cos = np.cos
 sqrt = np.sqrt
 
 
-class PerformanceMonitor:
+class ErrorHandler:
 	figure_dims = (12, 10)
-	default_save_location = "outputs"
+	default_module_location = "/home/robond/catkin_ws/src/RoboND-Kinematics-Project/kuka_arm/scripts"
+	default_save_location = default_module_location + "/outputs"
 	
-	def __init__(self, show_figures=False, save_figures=True):
+	def __init__(self, show_figures=False, save_figures=False, new_output_directory=True):
+		if not save_figures:
+			self.save_location = None	
+
+		elif new_output_directory:
+			session_dir = ErrorHandler.default_module_location + "/outputs_" + time.strftime('[%T]').replace(':', '_')
+			os.mkdir(session_dir)
+			self.save_location = session_dir
+
+		elif os.path.isdir(ErrorHandler.default_save_location):
+			self.save_location = ErrorHandler.default_save_location
+
+		elif os.path.isdir(ErrorHandler.default_module_location):
+			self.sace_location = ErrorHandler.default_module_location
+
+		else:
+			raise RuntimeError("No appropriate save directory could be located!")
+				
+		assert ((save_figures and os.path.isdir(self.save_location)) or
+			(not save_figures and (self.save_location is None or os.path.isdir(self.save_location))))
+
 		self.session_start_time = time.time()
 		
 		self.show_figures = show_figures
@@ -38,13 +59,13 @@ class PerformanceMonitor:
 		self.z_error_list = []
 		self.abs_error_list = []
 		
-		self.plot_file_names = []
+		self.img_file_names = []
 	
 	def record_EE_position_error(self, theta_list, pose):
 		'''
-		evaluate_EE_error(theta_list: List[float], pose: Pose) -> Tuple[float, float, float, float]:
+		record_EE_position_error(theta_list: List[float], pose: Pose) -> Tuple[float, float, float, float]:
 
-		x_error, y_error, z_error, absolute_error = evaluate_EE_error([theta1, theta2, theta3, theta4, theta5, theta6])
+		x_error, y_error, z_error, absolute_error = record_EE_position_error([theta1, theta2, theta3, theta4, theta5, theta6])
 
 		:param theta_list: calculated values for joints 1:6 in ascending order
 		:param pose: pose object contained in req.poses for which the given theta list was calculated
@@ -83,6 +104,7 @@ class PerformanceMonitor:
 		self.y_error_list.append(y_err)
 		self.z_error_list.append(z_err)
 		self.abs_error_list.append(abs_err)
+		
 	
 	def digest_request_results(self):
 		assert len(self.x_error_list) == len(self.y_error_list) == len(self.z_error_list) == len(self.abs_error_list)
@@ -90,7 +112,6 @@ class PerformanceMonitor:
 		self.n_requests_processed += 1
 		self.total_poses_processed += len(self.x_error_list)
 		
-		# This section contains some elementary error
 		x_err_max = max(self.x_error_list)
 		x_err_mean = np.mean(self.x_error_list)
 		
@@ -123,18 +144,15 @@ class PerformanceMonitor:
 		self.theta_results_archive.append([])
 		
 		if self.show_figures or self.save_figures:
-			if self.save_figures:
-				save_loc = PerformanceMonitor.default_save_location
-			else:
-				save_loc = None
-			
 			write_name = self.plot_req_error(self.n_requests_processed,
 			                                 show_fig=self.show_figures,
-			                                 save_location=save_loc)
+			                                 save_location=self.save_location)
 			
-			self.plot_file_names.append(write_name)
+			self.img_file_names.append(write_name)
+		
+		return means, maxes
 	
-	def plot_req_error(self, req_number, show_fig=True, save_location=None):
+	def plot_req_error(self, req_number, show_fig=True, save_location=None, extension="png"):
 		''''''
 		assert isinstance(show_fig, bool)
 		assert isinstance(req_number, int)
@@ -155,7 +173,7 @@ class PerformanceMonitor:
 		y_max = 1.05 * max(max(x_err), max(y_err), max(z_err), max(abs_err))
 		y_min = 1.05 * min(min(x_err), min(y_err), min(z_err), min(abs_err))
 		
-		output_fig = plt.figure(figsize=PerformanceMonitor.figure_dims)
+		output_fig = plt.figure(figsize=ErrorHandler.figure_dims)
 		
 		plt.subplot(211)
 		plt.plot(inds, zero, color='k', aa=True, lw=2, alpha=0.6)
@@ -184,18 +202,16 @@ class PerformanceMonitor:
 		write_name = None
 		
 		if save_location is not None:
-			assert isinstance(save_location, str)
-			assert os.path.isdir(save_location)
-			
-			write_name = "pos_error_plot_req_{}_{}.png".format(req_number, time.strftime('[%T]').replace(':', '_'))
+			write_name = "pos_error_plot_req_{}_{}.{}".format(req_number, time.strftime('[%T]').replace(':', '_'), extension)
 			file_path = os.path.join(save_location, write_name)
 			
 			plt.savefig(file_path)
-			plt.close(output_fig)
 		
 		if show_fig:
 			plt.show()
-		
+
+		plt.close(output_fig)
+
 		return write_name
 
 #
@@ -211,4 +227,4 @@ class PerformanceMonitor:
 #
 # if __name__ == "__main__":
 # 	IK_server()
-# # monitor = PerformanceMonitor(show_figures=True, save_figures=False)
+# # monitor = ErrorHandler(show_figures=True, save_figures=False)
