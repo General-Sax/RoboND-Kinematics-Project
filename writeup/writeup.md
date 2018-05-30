@@ -1,4 +1,7 @@
-# Forward and Inverse Kinematics Models of the KUKA KR210 Serial Manipulator 
+# KR210 Serial Manipulator Kinematics
+**Udacity Robotics Software Engineering Nanodegree Project 2**
+*
+Joel Tiura*
 
 ### Robotics Software Engineering Nanodegree Project 2
 
@@ -23,11 +26,26 @@ the solution.
 
 ---
 
+['consistent_error.png',
+ 'crashing_and_performance_info.png',
+ 'denavit-hartenberg-parameter-definitions-01-modified.png',
+ 'intercept_illustration_bkgrnd_crop.png',
+ 'nice_stacking.png',
+ 'rack_em_up.png',
+ 'simultaneous_solution_multiplicity_edit.png',
+ 'SSS_Triangle.png',
+ 'WATCH_FOR_THIS_CAREFULLY.png',
+ 'color_coded_links.jpg', 
+ 'dh_axes_assignment.jpg']
+
+
 [//]: # (Image References)
 
 [image1]: writeup_graphics/intercept_illustration_bkgrnd_crop.png
 [image2]: writeup_graphics/simultaneous_solution_multiplicity_edit.png
 [dh_param_definition]: writeup_graphics/denavit-hartenberg-parameter-definitions-01-modified.png
+[color_coded_links]: writeup_graphics/color_coded_links.jpg
+[dh_axes_assignment]: writeup_graphics/dh_axes_assignment.jpg
 [columns]: math/columns.png
 [generic_dh_tf_matrix]: math/generic_dh_tf_single_step.png
 [r_corr_sym]: math/rpy_not_corrected.png
@@ -84,11 +102,171 @@ the solution.
 
 
 ## DH Parameter Assignment
+Before I started digging into the URDF file or doing any math, I had to get to know my robot.
+Not pictured here is my extensive time playing with the forward kinematics rviz demo, and forming a
+visual, spatial impression of the robot's geometry and articulation. I am a visual learner and is
+one of my strongest methods, and good visual intuition is critical to any design process. and out how the system 
+
+Before doing anything else, I pl
+
+
 ### Follow the Algorithm!
+From the lesson, 
+1. Label all joints from {1, 2, … , n}.
+2. Label all links from {0, 1, …, n} starting with the fixed base link as 0.
+3. Draw lines through all joints, defining the joint axes.
+4. Assign the Z-axis of each frame to point along its joint axis. 
+5. Identify the common normal between each frame Z_i-1 and frame Z_i.
+6. The endpoints of "intermediate links" (i.e., not the base link or the end effector) are associated with two joint axes, {i} and {i+1}. For i from 1 to n-1, assign the X_i vector to be …
+    - For skew axes, along the normal between Z_i and Z_i+1 and pointing from {i} to {i+1}.
+    - For intersecting axes, normal to the plane containing Z_i and Z_i+1
+    - For parallel or coincident axes, the assignment is arbitrary; look for ways to make other DH parameters equal to zero.
+7. For the base link, always choose frame {0} to be coincident with frame {1} when the first joint variable (theta_1 or d_1) is equal to zero. This will guarantee that alpha_0 = a_0 = 0, and, if joint 1 is a revolute, d_1 = 0. If joint 1 is prismatic, then theta_1 = 0.
+8. For the end effector frame, if joint n is revolute, choose X_n to be in the direction of X_n-1 when theta_n = 0 and the origin of frame {n} such that d_n = 0.
+
+
+Well, in a nutshell, that's what I did.
+
+First I layed out a few schematic sketches of the relative DH axes:
+
+![relative DH axis schematic diagram][dh_axes_assignment]
+
+Color-coding links to highlight joint positions/functions, which in turn helped my brain parse the ground-truth geometry.
+
+![color coding the links to highlight joint positions/functions][color_coded_links]
+
+
+The early phase involves a lot of scratch work exploring the problem space. Not all of it is worth explaining, but I'll include some for flavor:
+
+
+
+but simultaneously, I was paying far more attention to the parameter definitions, and to the mathematical architecture of the transform that I was trying to encode.
+
+
+
+### Leveraging Special Cases: Symmetries are Powerful
+In the lesson, four special geometric cases were discussed which imply necessary constraints on the dh parameters of the transform. 
+These relationships are intuitive; for each particular geometrie and its corresponding constraint(s), there is a verbal description that explains it:
+- collinear lines: alpha = 0 and a = 0: 
+"If two joint axes are collinear..."
+    - "...the magnitude of the twist angle between them must be zero, since otherwise this would imply non-collinearity."
+    - "...the magnitude of the link length between them must be zero, since this quantity represents a displacement orthogonal to the collinear axis."
+- parallel lines: alpha = 0 and a != 0: 
+"If two joint axes are parallel (but *not* collinear)..."
+    - "...the magnitude of the twist angle between them must be zero, since otherwise this would imply they were not parallel."
+    - "...the magnitude of the link length between them must be nonzero, since this quantity represents the necessarily nonzero minimum separation between non-collinear axes."
+- intersecting lines: alpha != 0 and a = 0:
+"If two joint axes intersect..."
+    - "...the magnitude of the twist angle between them must be nonzero, since otherwise this would imply they were parallel or collinear."
+    - "...the magnitude of the link length between them must be zero, since this quantity represents the necessarily zero minimum separation between intersecting axes."
+- if the common normal intersects Z_i at the origin of frame i, then d_i = 0
+
+
+
 When I first began to analyze the inverse kinematics of the KR210 manipulator, I wanted to break down its geometry in 
 detail, so I could rebuild the problem from the base link up. And the base link seemed like the right place to start, 
 since the whole manipulator and all of the non-static reference frames pivot around it. The origin of the base_link 
 coordinate system naturally lies in the axis of rotation for joint_1.
+
+
+### URDF Arm Joint Information
+
+```xml
+  <!-- joints -->
+  <joint name="fixed_base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <joint name="joint_1" type="revolute">
+    <origin xyz="0 0 0.33" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="link_1"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="${-185*deg}" upper="${185*deg}" effort="300" velocity="${123*deg}"/>
+  </joint>
+  <joint name="joint_2" type="revolute">
+    <origin xyz="0.35 0 0.42" rpy="0 0 0"/>
+    <parent link="link_1"/>
+    <child link="link_2"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="${-45*deg}" upper="${85*deg}" effort="300" velocity="${115*deg}"/>
+  </joint>
+  <joint name="joint_3" type="revolute">
+    <origin xyz="0 0 1.25" rpy="0 0 0"/>
+    <parent link="link_2"/>
+    <child link="link_3"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="${-210*deg}" upper="${(155-90)*deg}" effort="300" velocity="${112*deg}"/>
+  </joint>
+  <joint name="joint_4" type="revolute">
+    <origin xyz="0.96 0 -0.054" rpy="0 0 0"/>
+    <parent link="link_3"/>
+    <child link="link_4"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="${-350*deg}" upper="${350*deg}" effort="300" velocity="${179*deg}"/>
+  </joint>
+  <joint name="joint_5" type="revolute">
+    <origin xyz="0.54 0 0" rpy="0 0 0"/>
+    <parent link="link_4"/>
+    <child link="link_5"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="${-125*deg}" upper="${125*deg}" effort="300" velocity="${172*deg}"/>
+  </joint>
+  <joint name="joint_6" type="revolute">
+    <origin xyz="0.193 0 0" rpy="0 0 0"/>
+    <parent link="link_5"/>
+    <child link="link_6"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="${-350*deg}" upper="${350*deg}" effort="300" velocity="${219*deg}"/>
+  </joint>
+```
+
+### URDF Gripper Joint Information
+
+```xml
+  <joint name="right_gripper_finger_joint" type="prismatic">
+    <origin rpy="0 0 0" xyz="0.15 -0.0725 0" />
+    <parent link="gripper_link" />
+    <child link="right_gripper_finger_link" />
+    <axis xyz="0 1 0" />
+    <limit effort="100" lower="-0.01" upper="0.06" velocity="0.05" />
+    <dynamics damping="0.7" />
+  </joint>
+  <joint name="left_gripper_finger_joint" type="prismatic">
+    <origin rpy="0 0 0" xyz="0.15 0.0725 0" />
+    <parent link="gripper_link" />
+    <child link="left_gripper_finger_link" />
+    <axis xyz="0 -1 0" />
+    <limit effort="100" lower="-0.01" upper="0.06" velocity="0.05" />
+    <dynamics damping="0.7" />
+  </joint>
+  <joint name="gripper_joint" type="fixed">
+    <parent link="link_6"/>
+    <child link="gripper_link"/>
+    <origin xyz="0.11 0 0" rpy="0 0 0"/><!--0.087-->
+    <axis xyz="0 1 0" />
+  </joint>
+```
+
+
+Joint | URDF Origin ("x y z") | URDF Type
+--- | --- | --- 
+fixed_base_joint | "0 0 0" | "fixed"
+joint_1 | "0 0 0.33" | "revolute"
+joint_2 | "0.35 0 0.42" | "revolute"
+joint_3 | "0 0 1.25" | "revolute"
+joint_4 | "0.96 0 -0.054" | "revolute"
+joint_5 | "0.54 0 0" | "revolute"
+joint_6 | "0.193 0 0" | "revolute"
+gripper_joint | "0.11 0 0" | "fixed"
+left_gripper_finger_joint | "0.15 0.0725 0" | "prismatic"
+right_gripper_finger_joint | "0.15 -0.0725 0" | "prismatic" 
+
+
+
+
+
 
 
 ### DH Parameter Table
@@ -155,13 +333,11 @@ alter the location of the end effector by rotating the direction at which link 5
 For any viable pose request, there is a specific point target which serves as a boundary condition for an IK solution. 
 By itself, however, that position vector wouldn't be a very rigid constraint; the IK process would need to somehow 
 select a valid orientation of approach. Since a pose also provides an orientation quaternion, it solves this problem for
-us. While the wrist center's location is not specified explicitly, it is already determined *implicitly* by the 
-specified end effector orientation.
+us. 
 
-Adding this orientation uniquely determines the location of the wrist center because the distance between the 
-wrist center and the end effector is a fixed 0.303m.  places a point on the target location, and then displaces it
-by magnitude from the target location in the 
-direction *opposite* the orientation vector places one at the location of the wrist center.
+This orientation directly determines the location of the wrist center; the distance between the wrist center and the 
+end effector is a constant 0.303m, thus, there is a unique wrist center displaced along the orientation vector by 
+precisely this distance.
 
 As I have established, all joint origins from the base link up to (and including) the wrist center are coplanar.
 While joint_1 establishes the angle of the positioning plane about the Z_0/Z_1 axis, joint_2 and joint_3 together establish 
@@ -591,7 +767,7 @@ def symbolic_homogeneous_transform(rotation_list, translation):
 
 ```python
 # Invoke generalized dh parameter symbols:
-# alpha, a, d, q = twist_angle, link_length, joint_angle, link_offset
+# alpha, a, d, q = twist_angle, link_length, link_offset, joint_angle
 a, q, d, alpha = sp.symbols('a, q, d, alpha')
 
 def single_dh_transform_step(alpha, a, d, q):
@@ -797,6 +973,12 @@ inside the working server code. and as such, I sought to  as many features under
 much of the process of deriving the components of a working solution was  to distill the inverse kinematics problem 
 down to its essence, and do my best to refine the IK_server loop into a representation of a solution to that problem.
 weed out redundant calculations, the minimum number of 'moving parts'
+
+### Function: handle_calculate_IK
+
+while the wrist center's location is not specified explicitly, it is already determined
+*implicitly* by the specified end effector orientation.
+     
 
 
 ### Function: construct_R_EE
