@@ -19,6 +19,8 @@ from tf.transformations import euler_from_quaternion
 from kuka_arm.srv import *
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
+from error_handler import ErrorHandler
+
 # There's a lot of dense trig expressions ahead so I'll also directly import these for readability
 # SymPy versions of sqrt, sin and cos are *NOT* used in the live code anywhere, so there isn't any namespace ambiguity
 sin = np.sin
@@ -128,6 +130,11 @@ def handle_calculate_IK(req):
     t_start = time.time() # record start time
     n_poses = len(req.poses)
     rospy.loginfo("Received %s eef-poses from the plan" % n_poses)
+    
+    if 'error_handler' in globals():
+        global error_handler
+    else:
+        error_handler = None
 
     if n_poses < 1:
         print "No valid poses received"
@@ -215,23 +222,36 @@ def handle_calculate_IK(req):
             joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
             joint_trajectory_list.append(joint_trajectory_point)
 
-            # Calculate end-effector positioning error for this pose via FK comparison
-            x_err, y_err, z_err, abs_err = compute_EE_position_error(joint_trajectory_point.positions, pose)
-            # Record error for end-of-request summary
-            err_dict['x'].append(x_err)
-            err_dict['y'].append(y_err)
-            err_dict['z'].append(z_err)
-            err_dict['abs'].append(abs_err)
+            if error_handler is not None:
+                error_handler.record_EE_position_error(joint_trajectory_point.positions, pose)
+            else:
+                # Calculate end-effector positioning error for this pose via FK comparison
+                x_err, y_err, z_err, abs_err = compute_EE_position_error(joint_trajectory_point.positions, pose)
+                # Record error for end-of-request summary
+                err_dict['x'].append(x_err)
+                err_dict['y'].append(y_err)
+                err_dict['z'].append(z_err)
+                err_dict['abs'].append(abs_err)
+
 
         # This section contains some elementary error logging/monitoring
-        x_err_max = max(err_dict['x'])
-        x_err_mean = np.mean(err_dict['x'])
-        y_err_max = max(err_dict['y'])
-        y_err_mean = np.mean(err_dict['y'])
-        z_err_max = max(err_dict['z'])
-        z_err_mean = np.mean(err_dict['z'])
-        abs_err_max = max(err_dict['abs'])
-        abs_err_mean = np.mean(err_dict['abs'])
+        if error_handler is not None:
+            if SHOW_FIGS:
+                rospy.logwarn('Figure display is blocking execution! Close figure window to resume IK_server functionality.')
+
+            means, maxes = error_handler.digest_request_results()
+            x_err_mean, y_err_mean, z_err_mean, abs_err_mean = means
+            x_err_max, y_err_max, z_err_max, abs_err_max = maxes
+            
+        else:
+            x_err_max = max(err_dict['x'])
+            x_err_mean = np.mean(err_dict['x'])
+            y_err_max = max(err_dict['y'])
+            y_err_mean = np.mean(err_dict['y'])
+            z_err_max = max(err_dict['z'])
+            z_err_mean = np.mean(err_dict['z'])
+            abs_err_max = max(err_dict['abs'])
+            abs_err_mean = np.mean(err_dict['abs'])
 
         rospy.loginfo('maximum request error:\n x: {}\n y: {}\n z: {}\n abs: {}\n'.format(x_err_max, y_err_max, z_err_max, abs_err_max))
         rospy.loginfo('mean request error:\n x: {}\n y: {}\n z: {}\n abs: {}\n'.format(x_err_mean, y_err_mean, z_err_mean, abs_err_mean))
@@ -244,17 +264,19 @@ def handle_calculate_IK(req):
         # This conditional logic adds a tiny amount of overhead compared to the huge performance boosts elsewhere.
         if __name__ != "__main__":
             return joint_trajectory_list
-    
         return CalculateIKResponse(joint_trajectory_list)
 
 
 def IK_server():
     # initialize node and declare calculate_ik service
-    
     rospy.init_node('IK_server')
     s = rospy.Service('calculate_ik', CalculateIK, handle_calculate_IK)
     print "Ready to receive an IK request\n"
     rospy.spin()
 
 if __name__ == "__main__":
+    SAVE_FIGS = False
+    SHOW_FIGS = False
+    error_handler = ErrorHandler(show_figures=SHOW_FIGS, save_figures=SAVE_FIGS)
     IK_server()
+
