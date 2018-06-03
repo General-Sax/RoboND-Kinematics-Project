@@ -1,28 +1,10 @@
 # KR210 Serial Manipulator Kinematics
 **Udacity Robotics Software Engineering Nanodegree Project 2**
-*
-Joel Tiura*
+*Joel Tiura*
 
-### Robotics Software Engineering Nanodegree Project 2
-
-Joel Tiura
 ***
 
-
-## Abstract
-
-*The KUKA KR210 is an industrial robotic arm (serial manipulator) which presents an excellent testbed to explore inverse
- kinematics, due to its obliging geometry. It has a spherical wrist supported by coplanar system links with with 6 joints, 
- also referred to as axes or degrees of freedom (DOF's). In this project, the objective was to implement*
-
-Forward Kinematics Functionality as Design Prerequisite
-
-I am a very spatial and visual thinker, and I often benefit profoundly from attempting to break down a problem into 
-stages or steps with clear geometric analogs. I appreciate how powerful the matrix representations are for calculating 
-these transformations efficiently, and I am happy to employ them as a computational shorthand, but when I'm learning 
-a to solve a new problem I prefer to map it out with geometric or other graphical models first. I want to find useful 
-symmetries, make diagrams to illustrate relationships, and generally let my visual imagination explore the shape of 
-the solution.
+The KUKA KR210 is an industrial robotic arm (serial manipulator) which presents an excellent testbed to explore inverse kinematics, due to its obliging geometry. It has a spherical wrist, an elegant design choice which  controlling the orientation of the end effector supported by a coplanar system links with    with 6 joints, also referred to as axes or degrees of freedom (DOF's). In this project, the objective was to implement
 
 ---
 
@@ -41,8 +23,9 @@ the solution.
 
 [//]: # (Image References)
 
-[image1]: writeup_graphics/intercept_illustration_bkgrnd_crop.png
-[image2]: writeup_graphics/simultaneous_solution_multiplicity_edit.png
+[SSS_triangle_1]: writeup_graphics/SSS_Triangle.png
+[simultaneous_solver_justification]: writeup_graphics/intercept_illustration_bkgrnd_crop.png
+[simultaneous_solver_degeneracy]: writeup_graphics/simultaneous_solution_multiplicity_edit.png
 [dh_param_definition]: writeup_graphics/denavit-hartenberg-parameter-definitions-01-modified.png
 [color_coded_links]: writeup_graphics/color_coded_links.jpg
 [dh_axes_assignment]: writeup_graphics/dh_axes_assignment.jpg
@@ -77,23 +60,27 @@ the solution.
 
 
 
+***
+## Introduction / Abstract
+
+
+## Forward Kinematics Functionality as Design Prerequisite
+
 
 ## Forward Kinematics Tool
 
+
+
 ***
 ## Denavit-Hartenberg Parameterization
-- URDF File Links
-- Link Lengths
-- Link Geometry
-- Link Origins
-- URDF File Joints
-- Joint Types
-- Joint Coordinates
-- Joint Ranges
-    - By comparing the slider bounds of the joint_state_publisher to the urdf, I observe that they are accurate 
-    representations of the urdf joint limits, as expected. However, the slider values are presented in radians rather than
-    degrees, as in the URDF file.
-    - Joint ranges 
+### URDF File Links
+#### Link Lengths
+#### Link Geometry
+#### Link Origins
+### URDF File Joints
+#### Joint Types
+#### Joint Coordinates
+#### Joint Ranges
 
 ## Composing DH-Compatible Geometric Model
 ![annotated dh parameter illustration][dh_param_definition]
@@ -168,6 +155,9 @@ detail, so I could rebuild the problem from the base link up. And the base link 
 since the whole manipulator and all of the non-static reference frames pivot around it. The origin of the base_link 
 coordinate system naturally lies in the axis of rotation for joint_1.
 
+By comparing the slider bounds of the joint_state_publisher to the urdf, I observe that they are accurate 
+representations of the urdf joint limits, as expected. However, the slider values are presented in radians rather than
+degrees, as in the URDF file.
 
 ### URDF Arm Joint Information
 
@@ -286,11 +276,14 @@ NOTE: the value of d7 = 0.303 is the distance to the gripper origin, not the gra
 The 0.303 value is given in the problem description and intro, but seems to me a less natural choice than 0.453,
 which is the actual distance between the target point and the wrist center.
 
+
 ***
 
 ## Decoupling and Solution Strategy
 
 While the position and orientation of the wrist center may be decoupled problems, they have a subtle interdependence.
+
+I am a very spatial and visual thinker, and I often benefit profoundly from attempting to break down a problem into stages or steps with clear geometric analogs. I appreciate how powerful the matrix representations are for calculating these transformations efficiently, and I am happy to employ them as a computational shorthand, but when I'm learning a to solve a new problem I prefer to map it out with geometric or other graphical models first. I want to find useful symmetries, make diagrams to illustrate relationships, and generally let my visual imagination explore the shape of the solution.
 
 
 ## Inverse Kinematics Steps
@@ -363,14 +356,13 @@ Since joints 0-5 are confined to the same vertical plane, and these are sufficie
 
 
 ### Joints 2 & 3: The SSS Triangle Method
-
 There is a slight hiccup here; a slight offset between the axes of joints 3 and 4. This of 
 Since the articulation of joint 4 is revolute about the axis between itself and joint 5 (a.k.a. the wrist center), and since both joint origins lie in plane with joint 3 AND joint 2, finding ain plane with the wrist center - **BUT ONLY APPROXIMATELY; SEE CORRECTION!** - the 
 The origins of joints 2, 3, and 5 all lie in the
 Let a, b, c represent sides of the triangle 
 
 
-![alt text][image2]
+![alt text][SSS_triangle_1]
 
 
 
@@ -380,10 +372,22 @@ The SSS Triangle method is elegant, and performs well, generally, but it only fi
 
 Another solution model which I investigated essentially amounts to solving for the the intersections of the sets of allowed locations for joint 3 given fixed locations for joint 2 and 5.
 
-![alt text][image1]
+
+![alt text][simultaneous_solver_justification]
+
+![alt text][simultaneous_solver_degeneracy]
 
 
-### Geometric 
+Before enforcing the URDF model's joint range limits, joint 2 is free to move joint 3 to any location on a circle of radius 1.25m about its Z-axis, the length of link 2. This circle lies in the plane containing the origins of joints 0-5, the 'positioning plane.' This circle is the locus of all points 
+
+In an analogous (but inverted) manner, joint 5 is the center may be accessed by joint 3 from any point
+
+Joint 2 is taken to be the natural origin for solving this step in the problem.
+For the sake of cognitive simplicity, we will consider the next steps as purely 2-dimensional.
+In that frame of reference, Joint 5 is located at (s5, z5)
+
+
+
 Regardless of our choice of method, we will need the following values to be loaded:
 
 ```python
@@ -401,18 +405,6 @@ radius_j2_j3 = dh_parameter[a2]
 
 # radius_j5_j3, delta_s, delta_z
 ```
-
-
-
-Before enforcing the URDF model's joint range limits, joint 2 is free to move joint 3 to any location on a circle of radius 1.25m about its Z-axis, the length of link 2. This circle lies in the plane containing the origins of joints 0-5, the 'positioning plane.' This circle is the locus of all points 
-
-In an analogous (but inverted) manner, joint 5 is the center may be accessed by joint 3 from any point
-
-Joint 2 is taken to be the natural origin for solving this step in the problem.
-For the sake of cognitive simplicity, we will consider the next steps as purely 2-dimensional.
-In that frame of reference, Joint 5 is located at (s5, z5)
-
-
 
 
 
